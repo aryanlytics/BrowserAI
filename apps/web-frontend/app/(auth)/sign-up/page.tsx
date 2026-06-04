@@ -9,6 +9,24 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
 const SignUp = () => {
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+    confirmPassword: ""
+  })
+
+  const handleinput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const {name , value} = e.target;
+    setFormData({
+      ...formData,
+      [name]: value
+    })
+  }
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    console.log(formData);
+  }
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -37,12 +55,12 @@ const SignUp = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            
+            <form onSubmit={handleSubmit}>
             <div className="space-y-2">
               <Label htmlFor="full-name">Full Name</Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-                <Input id="full-name" placeholder="John Doe" autoComplete="off" className="bg-white/5 border-white/10 text-white pl-10 placeholder:text-white/40 focus-visible:ring-blue-500" />
+                <Input name="fullName" value={formData.fullName} onChange={handleinput} id="full-name" placeholder="John Doe" autoComplete="off" className="bg-white/5 border-white/10 text-white pl-10 placeholder:text-white/40 focus-visible:ring-blue-500" />
               </div>
             </div>
             
@@ -50,7 +68,7 @@ const SignUp = () => {
               <Label htmlFor="email">Email</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-                <Input id="email" type="email" placeholder="m@example.com" autoComplete="off" className="bg-white/5 border-white/10 text-white pl-10 placeholder:text-white/40 focus-visible:ring-blue-500" />
+                <Input name="email" value={formData.email} onChange={handleinput} id="email" type="email" placeholder="m@example.com" autoComplete="off" className="bg-white/5 border-white/10 text-white pl-10 placeholder:text-white/40 focus-visible:ring-blue-500" />
               </div>
             </div>
             
@@ -59,6 +77,9 @@ const SignUp = () => {
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
                 <Input 
+                  name="password"
+                  value={formData.password}
+                  onChange={handleinput}
                   id="password" 
                   type={showPassword ? "text" : "password"} 
                   placeholder='Password'
@@ -80,6 +101,9 @@ const SignUp = () => {
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
                 <Input 
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleinput}
                   id="confirm-password" 
                   type={showConfirmPassword ? "text" : "password"} 
                   placeholder='Confirm Password'
@@ -96,9 +120,10 @@ const SignUp = () => {
               </div>
             </div>
             
-            <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white mt-2">
+            <Button type='submit' className="w-full bg-blue-600 hover:bg-blue-700 text-white mt-2">
               Create account
             </Button>
+            </form>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
             <div className="relative w-full">
