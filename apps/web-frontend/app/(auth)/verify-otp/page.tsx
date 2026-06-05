@@ -67,7 +67,7 @@ const VerifyOtp = () => {
               <Sparkles className="w-5 h-5 text-blue-400" />
             </div>
             <span className="font-extrabold text-2xl tracking-tight text-white">
-              Browser<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">AI</span>
+              Browser<span className="text-transparent bg-clip-text bg-linear-to-r from-blue-400 to-purple-500">AI</span>
             </span>
           </Link>
         </div>
@@ -117,7 +117,7 @@ const VerifyOtp = () => {
           </CardContent>
           <CardFooter className="flex flex-col gap-4 pt-2 pb-6">
             <p className="text-center text-sm text-white/60">
-              Didn't receive a code?{" "}
+              Didn&apos;t receive a code?{" "}
               <button type="button" className="text-blue-400 hover:text-blue-300 underline underline-offset-4 font-medium transition-colors">
                 Resend code
               </button>
