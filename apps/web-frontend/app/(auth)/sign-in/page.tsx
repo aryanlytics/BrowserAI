@@ -64,7 +64,7 @@ const SignIn = () => {
               <Sparkles className="w-5 h-5 text-blue-400" />
             </div>
             <span className="font-extrabold text-2xl tracking-tight text-white">
-              Browser<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">AI</span>
+              Browser<span className="text-transparent bg-clip-text bg-linear-to-r from-blue-400 to-purple-500">AI</span>
             </span>
           </Link>
         </div>
@@ -153,7 +153,7 @@ const SignIn = () => {
               Google
             </Button>
             <p className="mt-4 text-center text-sm text-white/60">
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <Link href="/sign-up" className="text-blue-400 hover:text-blue-300 underline underline-offset-4">
                 Sign up
               </Link>
