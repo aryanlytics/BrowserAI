@@ -1,5 +1,5 @@
 import type { FastifyReply } from 'fastify'
-import { config } from '../config.js'
+import { config } from '../config/config.js'
 
 const IS_PROD = config.NODE_ENV === 'production'
 

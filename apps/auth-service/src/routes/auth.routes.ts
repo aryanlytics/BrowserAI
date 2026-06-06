@@ -2,25 +2,8 @@ import type { FastifyPluginAsync } from 'fastify'
 import { z } from 'zod'
 import { authService } from '../services/auth.service.js'
 import { setTokenCookies, clearTokenCookies } from '../utils/cookie.js'
-import { config } from '../config.js'
+import { config } from '../config/config.js'
 
-// ─── Zod schemas ──────────────────────────────────────────────────────────────
-
-const registerSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  fullName: z.string().trim().min(2, 'Full name must be at least 2 characters'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
-})
-
-const verifyOtpSchema = z.object({
-  email: z.string().email(),
-  otp: z.string().length(6, 'OTP must be 6 digits').regex(/^\d+$/, 'OTP must be numeric'),
-})
-
-const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1, 'Password is required'),
-})
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 

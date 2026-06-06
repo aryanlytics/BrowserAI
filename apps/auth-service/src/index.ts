@@ -1,56 +1,47 @@
-import 'dotenv/config'
 import Fastify from 'fastify'
 import cookie from '@fastify/cookie'
 import cors from '@fastify/cors'
+import { config } from './config/config.js'
+import { connectDatabases } from './config/database.js'
 import authRoutes from './routes/auth.routes.js'
-import { config } from './config.js'
 
-// ─── App factory ──────────────────────────────────────────────────────────────
+async function start() {
 
-export async function buildApp() {
-  const fastify = Fastify({
+  // ─── 1. Connect databases ──────────────────────────────────────────────────
+  await connectDatabases()
+
+  // ─── 2. Build app ─────────────────────────────────────────────────────────
+  const app = Fastify({
     logger: {
       level: config.NODE_ENV === 'production' ? 'warn' : 'info',
-      transport:
-        config.NODE_ENV !== 'production'
-          ? { target: 'pino-pretty', options: { colorize: true } }
-          : undefined,
+      transport: config.NODE_ENV !== 'production'
+        ? { target: 'pino-pretty', options: { colorize: true } }
+        : undefined,
     },
   })
 
-  // ── Plugins ─────────────────────────────────────────────────────────────────
+  // Plugins
+  await app.register(cookie)
+  await app.register(cors, {
+  origin: config.ALLOWED_ORIGINS, // 'http://localhost:4000'
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'x-internal-secret'], // gateway sends this header
+})
 
-  // Cookie parser — needed for reading refreshToken on /auth/refresh
-  await fastify.register(cookie)
+  // Routes
+  await app.register(authRoutes)
 
-  // CORS — auth-service receives requests forwarded by the gateway (localhost)
-  // In production, lock this down to the gateway's internal IP/hostname.
-  await fastify.register(cors, {
-    origin: true,
-    credentials: true,
-  })
-
-  // ── Health check ─────────────────────────────────────────────────────────────
-  fastify.get('/health', async () => ({
-    status: 'ok',
-    service: 'auth-service',
-    timestamp: new Date().toISOString(),
-  }))
-
-  // ── Auth routes ──────────────────────────────────────────────────────────────
-  await fastify.register(authRoutes)
-
-  return fastify
+  // ─── 3. Start listening ────────────────────────────────────────────────────
+  try {
+    await app.listen({ port: config.PORT, host: '0.0.0.0' })
+    console.log(`\n🚀 Auth Service → http://localhost:${config.PORT}\n`)
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    console.error(`\n[Server] ❌ Failed to start — ${message}`)
+    console.error(`[Server]    Is port ${config.PORT} already in use?\n`)
+    process.exit(1)
+  }
 }
 
-// ─── Start server ─────────────────────────────────────────────────────────────
-
-const app = await buildApp()
-
-try {
-  await app.listen({ port: config.PORT, host: '0.0.0.0' })
-  app.log.info(`Auth Service listening on http://localhost:${config.PORT}`)
-} catch (err) {
-  app.log.error(err)
-  process.exit(1)
-}
+start()
