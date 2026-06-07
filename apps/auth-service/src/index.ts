@@ -3,7 +3,7 @@ import cookie from '@fastify/cookie'
 import cors from '@fastify/cors'
 import { config } from './config/config.js'
 import { connectDatabases } from './config/database.js'
-import authRoutes from './routes/auth.routes.js'
+
 
 async function start() {
 
@@ -30,7 +30,7 @@ async function start() {
 })
 
   // Routes
-  await app.register(authRoutes)
+  await app.register()
 
   // ─── 3. Start listening ────────────────────────────────────────────────────
   try {
