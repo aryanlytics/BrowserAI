@@ -53,18 +53,18 @@ export class AuthService {
       email: key,
       fullName,
       passwordHash,
-      isVerified: false,
+      isV
       createdAt: new Date(),
     }
     users.set(key, user)
 
-    const otp = generateOtp()
+    const otp
     await storeOtp(key, otp)
 
     // TODO: Send via nodemailer/resend in production
     // For now, print to console so you can copy it during dev
     console.log(`\n  [DEV] OTP for ${email}: ${otp}\n`)
-  }
+  
 
   /**
    * Verify OTP → mark user as verified → issue tokens.
@@ -72,7 +72,7 @@ export class AuthService {
    */
   async verifyOtpAndActivate(
     email: string,
-    otp: string,
+    otp: str
   ): Promise<{ tokens: AuthTokens; user: SafeUser }> {
     const key = email.toLowerCase()
     const user = users.get(key)
