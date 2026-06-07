@@ -30,7 +30,7 @@ async function start() {
 })
 
   // Routes
-  await app.
+
 
   // ─── 3. Start listening ────────────────────────────────────────────────────
   try {
