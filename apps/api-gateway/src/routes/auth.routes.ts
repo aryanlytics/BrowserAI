@@ -19,11 +19,12 @@ import { config } from '../config/config.js'
  *   POST /auth/forget-password
  *   POST /auth/reset-password
  */
+// api-gateway/src/routes/auth.routes.ts
 const authRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.register(httpProxy, {
-    upstream: config.AUTH_SERVICE_URL,
-    prefix: '/auth',          // match incoming path prefix
-    rewritePrefix: '/auth',   // keep the /auth prefix when forwarding
+    upstream: config.AUTH_SERVICE_URL,  // http://localhost:4001
+    prefix: '/api/auth',                // match what Better Auth client sends
+    rewritePrefix: '/api/auth',         // keep same prefix when forwarding
     http2: false,
   })
 }
