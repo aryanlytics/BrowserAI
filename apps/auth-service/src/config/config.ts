@@ -1,16 +1,12 @@
 import 'dotenv/config'
 
-// ─── Required env vars — crash immediately if missing ─────────────────────────
-
 const required = [
   'MONGO_URL',
   'REDIS_URL',
-  'JWT_ACCESS_SECRET',
-  'JWT_REFRESH_SECRET',
-  'INTERNAL_SECRET',
+  'BETTER_AUTH_SECRET',
   'ALLOWED_ORIGINS',
-  'BASE_URL'
-
+  'BASE_URL',
+  'RESEND_API_KEY',
 ] as const
 
 for (const key of required) {
@@ -21,28 +17,22 @@ for (const key of required) {
   }
 }
 
-// ─── Config object ────────────────────────────────────────────────────────────
-
 export const config = {
   PORT: Number(process.env.PORT) || 4001,
   NODE_ENV: process.env.NODE_ENV || 'development',
 
   // Database
-  MONGO_URL:    process.env.MONGO_URL!,
-  REDIS_URL:    process.env.REDIS_URL!,
+  MONGO_URL: process.env.MONGO_URL!,
+  REDIS_URL: process.env.REDIS_URL!,
 
-  // JWT
-  JWT_ACCESS_SECRET:    process.env.JWT_ACCESS_SECRET!,
-  JWT_REFRESH_SECRET:   process.env.JWT_REFRESH_SECRET!,
-  JWT_ACCESS_EXPIRES:   process.env.JWT_ACCESS_EXPIRES  || '15m',
-  JWT_REFRESH_EXPIRES:  process.env.JWT_REFRESH_EXPIRES || '7d',
+  // Better Auth — replaces all JWT config
+  BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET!,
 
-  // OTP
-  OTP_EXPIRES_MINUTES: Number(process.env.OTP_EXPIRES_MINUTES) || 10,
-
-  // Internal secret — must match api-gateway
-  INTERNAL_SECRET: process.env.INTERNAL_SECRET!,
-
+  // CORS — only api-gateway should talk to auth-service
   ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS || 'http://localhost:4000',
+
+  // This service's own URL — Better Auth needs it
   BASE_URL: process.env.BASE_URL || 'http://localhost:4001',
+  RESEND_API_KEY: process.env.RESEND_API_KEY!,
+  
 } as const
