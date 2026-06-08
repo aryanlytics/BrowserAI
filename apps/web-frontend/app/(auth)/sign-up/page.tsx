@@ -47,32 +47,32 @@ const signUpSchema = z
     path: ["confirmPassword"],
   });
 
-// ─── Auth client (singleton) ──────────────────────────────────────────────────
-const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_AUTH_URL,
-});
-
-// ─── Password strength helper ─────────────────────────────────────────────────
-function getPasswordStrength(password: string): {
-  score: number;
-  label: string;
-  color: string;
-} {
-  if (!password) return { score: 0, label: "", color: "" };
-  let score = 0;
-  if (password.length >= 8) score++;
-  if (password.length >= 12) score++;
-  if (/[A-Z]/.test(password)) score++;
-  if (/[0-9]/.test(password)) score++;
-  if (/[^A-Za-z0-9]/.test(password)) score++;
-
-  if (score <= 1) return { score, label: "Weak", color: "bg-red-500" };
-  if (score <= 2) return { score, label: "Fair", color: "bg-orange-400" };
-  if (score <= 3) return { score, label: "Good", color: "bg-yellow-400" };
-  if (score <= 4) return { score, label: "Strong", color: "bg-green-400" };
-  return { score, label: "Very Strong", color: "bg-emerald-400" };
-}
-
+  
+  // ─── Password strength helper ─────────────────────────────────────────────────
+  function getPasswordStrength(password: string): {
+    score: number;
+    label: string;
+    color: string;
+  } {
+    if (!password) return { score: 0, label: "", color: "" };
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (password.length >= 12) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/[0-9]/.test(password)) score++;
+    if (/[^A-Za-z0-9]/.test(password)) score++;
+    
+    if (score <= 1) return { score, label: "Weak", color: "bg-red-500" };
+    if (score <= 2) return { score, label: "Fair", color: "bg-orange-400" };
+    if (score <= 3) return { score, label: "Good", color: "bg-yellow-400" };
+    if (score <= 4) return { score, label: "Strong", color: "bg-green-400" };
+    return { score, label: "Very Strong", color: "bg-emerald-400" };
+  }
+  // ─── Auth client (singleton) ──────────────────────────────────────────────────
+  const authClient = createAuthClient({
+    baseURL: process.env.NEXT_PUBLIC_AUTH_URL,
+  });
+  
 // ─── Component ────────────────────────────────────────────────────────────────
 const SignUp = () => {
   const router = useRouter();
@@ -145,8 +145,7 @@ const SignUp = () => {
             "We've sent a verification email to your inbox. Please check it to activate your account.",
           duration: 6000,
         });
-        // Give the toast time to show before navigating
-        setTimeout(() => router.push("/sign-in"), 1500);
+        
       }
     } catch {
       toast.error("Unexpected error", {
