@@ -3,14 +3,14 @@ import cookie from '@fastify/cookie'
 import cors from '@fastify/cors'
 import { config } from './config/config.js'
 import { connectDatabases } from './config/database.js'
-
+import authRoutes from './routes/auth.routes.js'
 
 async function start() {
 
-  // ─── 1. Connect databases ──────────────────────────────────────────────────
+  // 1. Connect databases
   await connectDatabases()
 
-  // ─── 2. Build app ─────────────────────────────────────────────────────────
+  // 2. Build app
   const app = Fastify({
     logger: {
       level: config.NODE_ENV === 'production' ? 'warn' : 'info',
@@ -20,19 +20,19 @@ async function start() {
     },
   })
 
-  // Plugins
+  // 3. Plugins
   await app.register(cookie)
   await app.register(cors, {
-  origin: config.ALLOWED_ORIGINS, // 'http://localhost:4000'
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'x-internal-secret'], // gateway sends this header
-})
+    origin: config.ALLOWED_ORIGINS,    // only api-gateway
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type'],
+  })
 
-  // Routes
+  // 4. Routes
+  await app.register(authRoutes)
 
-
-  // ─── 3. Start listening ────────────────────────────────────────────────────
+  // 5. Start
   try {
     await app.listen({ port: config.PORT, host: '0.0.0.0' })
     console.log(`\n🚀 Auth Service → http://localhost:${config.PORT}\n`)
