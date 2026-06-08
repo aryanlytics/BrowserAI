@@ -1,7 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify'
 import replyFrom from '@fastify/reply-from'
 import { authMiddleware } from '../middleware/auth.middleware.js'
-import { config } from '../config.js'
+import { config } from '../config/config.js'
 
 /**
  * Protected routes plugin (PRIVATE — authentication required).

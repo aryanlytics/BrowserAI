@@ -3,7 +3,7 @@ import cookie from '@fastify/cookie'
 import cors from '@fastify/cors'
 import authRoutes from './routes/auth.routes.js'
 import protectedRoutes from './routes/protected.routes.js'
-import { config } from './config.js'
+import { config } from './config/config.js'
 
 async function start() {
 

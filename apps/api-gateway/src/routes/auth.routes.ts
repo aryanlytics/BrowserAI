@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from 'fastify'
 import httpProxy from '@fastify/http-proxy'
-import { config } from '../config.js'
+import { config } from '../config/config.js'
 
 /**
  * Auth routes plugin (PUBLIC — no authentication required).
@@ -10,12 +10,14 @@ import { config } from '../config.js'
  * part of the API that is reachable without a valid session.
  *
  * Routes proxied:
- *   POST /auth/register
- *   POST /auth/login
- *   POST /auth/verify-otp
- *   POST /auth/refresh
- *   POST /auth/logout
- *   GET  /auth/me
+ *   POST /auth/sign-up/email
+ *   POST /auth/sign-in/email
+ *   POST /auth/sign-out
+ *   POST /auth/verify-email
+ *   POST /auth/send-verification-email
+ *   GET  /auth/session
+ *   POST /auth/forget-password
+ *   POST /auth/reset-password
  */
 const authRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.register(httpProxy, {
