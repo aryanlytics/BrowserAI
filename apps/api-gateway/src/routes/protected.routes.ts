@@ -38,15 +38,26 @@ const protectedRoutes: FastifyPluginAsync = async (fastify) => {
   // })
   // ----------------------------------------------------------------
 
-  // Catch-all: return 404 for any unknown protected route
-  // (removes the default "Route not found" message)
-  fastify.all('/*', async (_request, reply) => {
+  // Catch-all: return 404 for any unknown protected route.
+  // NOTE: We intentionally exclude OPTIONS here because @fastify/cors
+  // already registers its own OPTIONS handler for CORS preflight, and
+  // fastify.all() would conflict with it (duplicate route error).
+  const notFound = async (
+    _request: import('fastify').FastifyRequest,
+    reply: import('fastify').FastifyReply,
+  ) => {
     return reply.status(404).send({
       statusCode: 404,
       error: 'Not Found',
       message: 'No downstream service is registered for this path',
     })
-  })
+  }
+  fastify.get('/*', notFound)
+  fastify.post('/*', notFound)
+  fastify.put('/*', notFound)
+  fastify.patch('/*', notFound)
+  fastify.delete('/*', notFound)
+  fastify.head('/*', notFound)
 }
 
 export default protectedRoutes
