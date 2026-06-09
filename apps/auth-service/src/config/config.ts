@@ -32,7 +32,7 @@ export const config = {
   // Only the browser's Origin header matters here — the gateway (4001→4000)
   // is a server-to-server call and never sends an Origin header.
   // Comma-separated in .env → parsed into string[] here.
-  ALLOWED_ORIGINS: (process.env.ALLOWED_ORIGINS || 'http://localhost:3000'),
+  ALLOWED_ORIGINS: (process.env.ALLOWED_ORIGINS || 'http://localhost:3000').split(','),
 
   // The PUBLIC URL clients use to reach Better Auth (via the gateway).
   // Used to build email verification links and for CSRF origin checks.
