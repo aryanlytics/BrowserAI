@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+
 import {
   Sparkles,
   User,
@@ -26,8 +26,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { z } from "zod";
-import { createAuthClient } from "better-auth/client";
 import { toast } from "sonner";
+import { authClient } from '@/lib/auth-client'
 
 // ─── Zod schema ───────────────────────────────────────────────────────────────
 const signUpSchema = z
@@ -68,14 +68,10 @@ const signUpSchema = z
     if (score <= 4) return { score, label: "Strong", color: "bg-green-400" };
     return { score, label: "Very Strong", color: "bg-emerald-400" };
   }
-  // ─── Auth client (singleton) ──────────────────────────────────────────────────
-  const authClient = createAuthClient({
-    baseURL: process.env.NEXT_PUBLIC_AUTH_URL,
-  });
   
 // ─── Component ────────────────────────────────────────────────────────────────
 const SignUp = () => {
-  const router = useRouter();
+  
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -191,7 +187,7 @@ const SignUp = () => {
             </div>
             <span className="font-extrabold text-2xl tracking-tight text-white">
               Browser
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+              <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-400 to-purple-500">
                 AI
               </span>
             </span>
@@ -471,7 +467,7 @@ const SignUp = () => {
                 id="sign-up-submit"
                 type="submit"
                 disabled={isLoading}
-                className="w-full mt-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400
+                className="w-full mt-2 bg-linear-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400
                   text-white font-semibold h-9 gap-2 shadow-lg shadow-blue-500/20 transition-all duration-200
                   disabled:opacity-60 disabled:cursor-not-allowed"
               >
