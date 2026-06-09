@@ -67,6 +67,7 @@ export const auth = betterAuth({
   },
 
   // ── Trusted origins ───────────────────────────────────────────────────────
-  // Only api-gateway should be calling auth-service
-  trustedOrigins: [config.ALLOWED_ORIGINS],
+  // The browser sends Origin: localhost:3000 even after gateway proxying,
+  // so both the frontend and the gateway must be trusted.
+  trustedOrigins: config.ALLOWED_ORIGINS,
 })
