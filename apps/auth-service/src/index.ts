@@ -1,6 +1,5 @@
 import Fastify from 'fastify'
 import cookie from '@fastify/cookie'
-import cors from '@fastify/cors'
 import { config } from './config/config.js'
 import { connectDatabases } from './config/database.js'
 import authRoutes from './routes/auth.routes.js'
@@ -22,12 +21,6 @@ async function start() {
 
   // 3. Plugins
   await app.register(cookie)
-  await app.register(cors, {
-    origin: config.ALLOWED_ORIGINS,    // only api-gateway
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type'],
-  })
 
   // 4. Routes
   await app.register(authRoutes)
