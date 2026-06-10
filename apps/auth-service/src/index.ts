@@ -22,6 +22,14 @@ async function start() {
   // 3. Plugins
   await app.register(cookie)
 
+  // ── Raw body passthrough ──────────────────────────────────────────────────
+  // Fastify parses JSON bodies by default. Better Auth uses toNodeHandler which
+
+  app.addContentTypeParser('*', (_req, payload, done) => {
+    done(null, payload)
+  })
+
+
   // 4. Routes
   await app.register(authRoutes)
 
