@@ -13,6 +13,7 @@ import {
   AlertCircle,
   Loader2,
   ArrowRight,
+  CircleCheckBig,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -25,53 +26,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { z } from "zod";
+
 import { toast } from "sonner";
-import { authClient } from '@/lib/auth-client'
+import { useRouter } from "next/navigation";
+import api from "@/lib/api";
+import { signUpSchema } from "@/models/Zod";
 
-// ─── Zod schema ───────────────────────────────────────────────────────────────
-const signUpSchema = z
-  .object({
-    fullName: z.string().trim().min(2, "Full name must be at least 2 characters"),
-    email: z.string().trim().email("Please enter a valid email address"),
-    password: z
-      .string()
-      .trim()
-      .min(8, "Password must be at least 8 characters")
-      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-      .regex(/[0-9]/, "Password must contain at least one number"),
-    confirmPassword: z.string().trim(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
 
-  
-  // ─── Password strength helper ─────────────────────────────────────────────────
-  function getPasswordStrength(password: string): {
-    score: number;
-    label: string;
-    color: string;
-  } {
-    if (!password) return { score: 0, label: "", color: "" };
-    let score = 0;
-    if (password.length >= 8) score++;
-    if (password.length >= 12) score++;
-    if (/[A-Z]/.test(password)) score++;
-    if (/[0-9]/.test(password)) score++;
-    if (/[^A-Za-z0-9]/.test(password)) score++;
-    
-    if (score <= 1) return { score, label: "Weak", color: "bg-red-500" };
-    if (score <= 2) return { score, label: "Fair", color: "bg-orange-400" };
-    if (score <= 3) return { score, label: "Good", color: "bg-yellow-400" };
-    if (score <= 4) return { score, label: "Strong", color: "bg-green-400" };
-    return { score, label: "Very Strong", color: "bg-emerald-400" };
-  }
+
   
 // ─── Component ────────────────────────────────────────────────────────────────
 const SignUp = () => {
-  
+  const router = useRouter();
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -84,7 +50,11 @@ const SignUp = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const passwordStrength = getPasswordStrength(formData.password);
+  const hasMinLength = formData.password.length >= 8;
+  const hasLowercase = /[a-z]/.test(formData.password);
+  const hasCapital = /[A-Z]/.test(formData.password);
+  const hasNumber = /[0-9]/.test(formData.password);
+  const hasSpecial = /[^A-Za-z0-9]/.test(formData.password);
 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -95,9 +65,10 @@ const SignUp = () => {
     }
   };
 
+  // ── Handle Submit ────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
+    
     // ── Client-side validation ────────────────────────────────────────────
     const result = signUpSchema.safeParse(formData);
     if (!result.success) {
@@ -118,35 +89,26 @@ const SignUp = () => {
     const toastId = toast.loading("Creating your account…");
 
     try {
-      const { data, error } = await authClient.signUp.email({
-        name: formData.fullName,
+      await api.post('/api/auth/signup', {
+        fullName: formData.fullName,
         email: formData.email,
         password: formData.password,
-        callbackURL: "/dashboard",
       });
 
-      if (error) {
-        toast.error("Sign-up failed", {
-          id: toastId,
-          description:
-            error.message ?? "Something went wrong. Please try again.",
-        });
-        return;
-      }
-
-      if (data) {
-        toast.success("Account created!", {
-          id: toastId,
-          description:
-            "We've sent a verification email to your inbox. Please check it to activate your account.",
-          duration: 6000,
-        });
-        
-      }
-    } catch {
-      toast.error("Unexpected error", {
+      toast.success("Verify your email address", {
         id: toastId,
-        description: "An unexpected error occurred. Please try again later.",
+        description:
+          "We've sent a verification OTP to your email. Please enter it to proceed.",
+        duration: 6000,
+      });
+
+      router.push(`/verify-otp?email=${encodeURIComponent(formData.email)}`);
+    } catch (err) {
+      const axiosError = err as { response?: { data?: { message?: string } } };
+      const message = axiosError.response?.data?.message ?? "Something went wrong. Please try again.";
+      toast.error("Sign-up failed", {
+        id: toastId,
+        description: message,
       });
     } finally {
       setIsLoading(false);
@@ -154,18 +116,9 @@ const SignUp = () => {
   };
 
   const handleGoogleSignUp = async () => {
-    const toastId = toast.loading("Redirecting to Google…");
-    try {
-      await authClient.signIn.social({
-        provider: "google",
-        callbackURL: "/dashboard",
-      });
-    } catch {
-      toast.error("Google sign-up failed", {
-        id: toastId,
-        description: "Could not connect to Google. Please try again.",
-      });
-    }
+    toast.info("Google sign-up is not available right now.", {
+      description: "Please register using email and password.",
+    });
   };
 
   return (
@@ -354,34 +307,61 @@ const SignUp = () => {
                   </button>
                 </div>
 
-                {/* Password strength bar */}
+                {/* Password requirement checks */}
                 {formData.password && (
-                  <div id="password-strength" className="space-y-1">
-                    <div className="flex gap-1 h-1">
-                      {[1, 2, 3, 4, 5].map((i) => (
-                        <div
-                          key={i}
-                          className={`flex-1 rounded-full transition-all duration-300 ${
-                            i <= passwordStrength.score
-                              ? passwordStrength.color
-                              : "bg-white/10"
-                          }`}
-                        />
-                      ))}
+                  <div className="space-y-1.5 mt-2 bg-white/2 border border-white/5 rounded-lg p-3 text-xs">
+                    <p className="text-white/60 font-medium mb-1">Must contain at least:</p>
+                    <div className="space-y-1">
+                      {/* 8 characters minimum */}
+                      <div className={`flex items-center gap-2 transition-colors duration-300 ${
+                        hasMinLength ? "text-green-400" : "text-white/40"
+                      }`}>
+                        <CircleCheckBig className={`w-4 h-4 transition-transform duration-300 ${
+                          hasMinLength ? "text-green-400 scale-100" : "text-white/20 scale-95"
+                        }`} />
+                        <span>8 characters minimum</span>
+                      </div>
+
+                      {/* One lowercase character */}
+                      <div className={`flex items-center gap-2 transition-colors duration-300 ${
+                        hasLowercase ? "text-green-400" : "text-white/40"
+                      }`}>
+                        <CircleCheckBig className={`w-4 h-4 transition-transform duration-300 ${
+                          hasLowercase ? "text-green-400 scale-100" : "text-white/20 scale-95"
+                        }`} />
+                        <span>One lowercase character (a-z)</span>
+                      </div>
+
+                      {/* One uppercase character */}
+                      <div className={`flex items-center gap-2 transition-colors duration-300 ${
+                        hasCapital ? "text-green-400" : "text-white/40"
+                      }`}>
+                        <CircleCheckBig className={`w-4 h-4 transition-transform duration-300 ${
+                          hasCapital ? "text-green-400 scale-100" : "text-white/20 scale-95"
+                        }`} />
+                        <span>One uppercase character (A-Z)</span>
+                      </div>
+
+                      {/* One number */}
+                      <div className={`flex items-center gap-2 transition-colors duration-300 ${
+                        hasNumber ? "text-green-400" : "text-white/40"
+                      }`}>
+                        <CircleCheckBig className={`w-4 h-4 transition-transform duration-300 ${
+                          hasNumber ? "text-green-400 scale-100" : "text-white/20 scale-95"
+                        }`} />
+                        <span>One number (0-9)</span>
+                      </div>
+
+                      {/* One special character */}
+                      <div className={`flex items-center gap-2 transition-colors duration-300 ${
+                        hasSpecial ? "text-green-400" : "text-white/40"
+                      }`}>
+                        <CircleCheckBig className={`w-4 h-4 transition-transform duration-300 ${
+                          hasSpecial ? "text-green-400 scale-100" : "text-white/20 scale-95"
+                        }`} />
+                        <span>One special character (!@#)</span>
+                      </div>
                     </div>
-                    <p
-                      className={`text-xs ${
-                        passwordStrength.score <= 1
-                          ? "text-red-400"
-                          : passwordStrength.score <= 2
-                            ? "text-orange-400"
-                            : passwordStrength.score <= 3
-                              ? "text-yellow-400"
-                              : "text-green-400"
-                      }`}
-                    >
-                      {passwordStrength.label}
-                    </p>
                   </div>
                 )}
 
@@ -450,11 +430,21 @@ const SignUp = () => {
                     )}
                   </button>
                 </div>
+                {formData.confirmPassword && (
+                  <div className={`flex items-center gap-2 mt-1.5 text-xs transition-colors duration-300 ${
+                    formData.password === formData.confirmPassword ? "text-green-400" : "text-white/40"
+                  }`}>
+                    <CircleCheckBig className={`w-4 h-4 transition-transform duration-300 ${
+                      formData.password === formData.confirmPassword ? "text-green-400 scale-100" : "text-white/20 scale-95"
+                    }`} />
+                    <span>Passwords match</span>
+                  </div>
+                )}
                 {errors.confirmPassword && (
                   <p
                     id="confirmPassword-error"
                     role="alert"
-                    className="text-xs text-red-400 flex items-center gap-1"
+                    className="text-xs text-red-400 flex items-center gap-1 mt-1.5"
                   >
                     <AlertCircle className="w-3 h-3 shrink-0" />
                     {errors.confirmPassword}
