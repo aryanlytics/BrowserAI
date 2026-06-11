@@ -7,6 +7,7 @@ const required = [
   'ALLOWED_ORIGINS',
   'BASE_URL',
   'RESEND_API_KEY',
+  'INTERNAL_SECRET',
 ] as const
 
 for (const key of required) {
@@ -25,7 +26,7 @@ export const config = {
   MONGO_URL: process.env.MONGO_URL!,
   REDIS_URL: process.env.REDIS_URL!,
 
-  // Better Auth — replaces all JWT config
+  // Session/Cookie secret
   BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET!,
 
   // Origins trusted by Better Auth for CSRF checks.
@@ -40,4 +41,6 @@ export const config = {
   BASE_URL: process.env.BASE_URL || 'http://localhost:4000',
   RESEND_API_KEY: process.env.RESEND_API_KEY!,
   
+  // Internal service-to-service secret — must match api-gateway
+  INTERNAL_SECRET: process.env.INTERNAL_SECRET!,
 } as const
