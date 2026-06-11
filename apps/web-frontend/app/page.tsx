@@ -20,7 +20,7 @@ export default function Home() {
           
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-white mb-6 leading-tight max-w-4xl">
             Speak your intent. <br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-500">
+            <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-400 via-indigo-400 to-purple-500">
               Browser executes.
             </span>
           </h1>
@@ -42,9 +42,9 @@ export default function Home() {
 
           {/* Hero Image / "Soul Touch" Visual */}
           <div className="w-full max-w-5xl relative">
-            <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl blur opacity-20"></div>
+            <div className="absolute -inset-1 bg-linear-to-r from-blue-500 to-purple-600 rounded-2xl blur opacity-20"></div>
             <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
-              <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-t from-[#0a0a0f] via-transparent to-transparent z-10 pointer-events-none"></div>
+              <div className="absolute top-0 left-0 w-full h-full bg-linear-to-t from-[#0a0a0f] via-transparent to-transparent z-10 pointer-events-none"></div>
               <Image 
                 src="/hero-realistic.png" 
                 alt="Browser AI Interface" 
@@ -68,7 +68,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Feature 1 */}
-            <div className="p-8 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-colors group">
+            <div className="p-8 rounded-2xl bg-white/2 border border-white/5 hover:bg-white/4 transition-colors group">
               <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <Mic className="w-6 h-6 text-blue-400" />
               </div>
@@ -79,7 +79,7 @@ export default function Home() {
             </div>
 
             {/* Feature 2 */}
-            <div className="p-8 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-colors group relative overflow-hidden">
+            <div className="p-8 rounded-2xl bg-white/2 border border-white/5 hover:bg-white/4 transition-colors group relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 blur-[50px]"></div>
               <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <BrainCircuit className="w-6 h-6 text-purple-400" />
@@ -91,7 +91,7 @@ export default function Home() {
             </div>
 
             {/* Feature 3 */}
-            <div className="p-8 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-colors group">
+            <div className="p-8 rounded-2xl bg-white/2 border border-white/5 hover:bg-white/4 transition-colors group">
               <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <Command className="w-6 h-6 text-green-400" />
               </div>
@@ -113,7 +113,7 @@ export default function Home() {
             &quot;It feels less like using a tool, and more like having an extension of my own mind interacting with the web.&quot;
           </h2>
           <div className="flex items-center justify-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-600"></div>
+            <div className="w-12 h-12 rounded-full bg-linear-to-br from-blue-400 to-purple-600"></div>
             <div className="text-left">
               <p className="font-semibold text-white">Alex Chen</p>
               <p className="text-white/60 text-sm">Early Adopter</p>
