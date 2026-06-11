@@ -56,7 +56,18 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
         })
       }
 
-      // 4. Return user info
+      // 4. Rolling session (sliding expiration)
+      // If the session has less than 4 days left, extend it by another 7 days in the database
+      let refreshSession = false
+      const now = Date.now()
+      const threshold = 4 * 24 * 60 * 60 * 1000 // 4 days in milliseconds
+      if (session.expiresAt.getTime() - now < threshold) {
+        session.expiresAt = new Date(now + 7 * 24 * 60 * 60 * 1000)
+        await session.save()
+        refreshSession = true
+      }
+
+      // 5. Return user info and refresh indicator
       return {
         user: {
           id: user._id.toString(),
@@ -64,6 +75,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
           name: user.name,
           emailVerified: user.emailVerified,
         },
+        refreshSession,
       }
     } catch (err) {
       request.log.error(err, 'Failed to validate session token')
@@ -136,7 +148,6 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.status(201).send({
         success: true,
         message: 'Account registered successfully. Verification email sent.',
-        email,
       })
     } catch (err) {
       request.log.error(err, 'Sign up error')
@@ -186,31 +197,28 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
         })
       }
 
-      // Clear the OTP from cache
-      await redis.del(`otp:${email}`)
-
+      
       // Create session
       const token = randomBytes(32).toString('hex')
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
       await Session.create({ userId: user._id, token, expiresAt })
-
+      
       // Set cookie
-      reply.setCookie('accessToken', token, {
+      reply.setCookie('sessionToken', token, {
         path: '/',
         httpOnly: true,
         secure: config.NODE_ENV === 'production',
         sameSite: 'lax',
         maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
       })
+      
+      // Clear the OTP from cache
+      await redis.del(`otp:${email}`)
 
-      return {
-        user: {
-          id: user._id.toString(),
-          email: user.email,
-          name: user.name,
-          emailVerified: user.emailVerified,
-        },
-      }
+      return reply.status(200).send({
+        success: true,
+        message: 'Account verified successfully.',
+      })
     } catch (err) {
       request.log.error(err, 'Verification OTP error')
       return reply.status(500).send({
