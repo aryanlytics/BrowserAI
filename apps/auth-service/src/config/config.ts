@@ -3,7 +3,6 @@ import 'dotenv/config'
 const required = [
   'MONGO_URL',
   'REDIS_URL',
-  'BETTER_AUTH_SECRET',
   'ALLOWED_ORIGINS',
   'BASE_URL',
   'RESEND_API_KEY',
@@ -25,9 +24,6 @@ export const config = {
   // Database
   MONGO_URL: process.env.MONGO_URL!,
   REDIS_URL: process.env.REDIS_URL!,
-
-  // Session/Cookie secret
-  BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET!,
 
   // Origins trusted by Better Auth for CSRF checks.
   // Only the browser's Origin header matters here — the gateway (4001→4000)

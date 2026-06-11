@@ -2,7 +2,7 @@ import Fastify from 'fastify'
 import cookie from '@fastify/cookie'
 import cors from '@fastify/cors'
 import authRoutes from './routes/auth.routes.js'
-import protectedRoutes from './routes/protected.routes.js'
+
 import { config } from './config/config.js'
 
 async function start() {
@@ -36,7 +36,7 @@ async function start() {
   await app.register(authRoutes)
 
   // PROTECTED: everything else → auth middleware runs first
-  await app.register(protectedRoutes)
+
 
   // ─── Start ─────────────────────────────────────────────────────────────────
   try {
