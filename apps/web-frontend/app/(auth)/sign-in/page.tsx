@@ -2,12 +2,15 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Sparkles, Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Sparkles, Mail, Lock, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { z } from 'zod';
+import { useRouter } from 'next/navigation';
+import api from '@/lib/api';
+import { toast } from 'sonner';
 
 const signInSchema = z.object({
   email: z.string().trim().email("Please enter a valid email address"),
@@ -15,12 +18,14 @@ const signInSchema = z.object({
 });
 
 const SignIn = () => {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleinput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -34,7 +39,7 @@ const SignIn = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     const result = signInSchema.safeParse(formData);
@@ -49,7 +54,35 @@ const SignIn = () => {
     }
     
     setErrors({});
-    console.log("Validation passed:", result.data);
+    setIsLoading(true);
+    const toastId = toast.loading("Signing you in...");
+
+    try {
+      await api.post('/api/auth/signin', {
+        email: formData.email,
+        password: formData.password,
+      });
+
+      toast.success("Signed in successfully!", { id: toastId });
+      router.push('/dashboard');
+    } catch (err) {
+      const axiosError = err as { response?: { data?: { code?: string; message?: string } } };
+      const errorData = axiosError.response?.data;
+      if (errorData?.code === 'EMAIL_NOT_VERIFIED') {
+        toast.error("Email not verified", {
+          id: toastId,
+          description: errorData.message,
+        });
+        router.push(`/verify-otp?email=${encodeURIComponent(formData.email)}`);
+      } else {
+        toast.error("Sign-in failed", {
+          id: toastId,
+          description: errorData?.message || "Invalid email or password.",
+        });
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -135,8 +168,15 @@ const SignIn = () => {
                 )}
               </div>
               
-              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white mt-4">
-                Sign in
+              <Button type="submit" disabled={isLoading} className="w-full bg-blue-600 hover:bg-blue-700 text-white mt-4">
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    Signing in...
+                  </>
+                ) : (
+                  "Sign in"
+                )}
               </Button>
             </form>
           </CardContent>
@@ -149,7 +189,12 @@ const SignIn = () => {
                 <span className="bg-[#0f0f16] px-2 text-white/60">Or continue with</span>
               </div>
             </div>
-            <Button variant="outline" className="w-full border-white/10 bg-transparent text-white hover:bg-white/5 hover:text-white">
+            <Button
+              variant="outline"
+              disabled={isLoading}
+              onClick={() => toast.info("Google sign-in is not available right now.", { description: "Please register/login using email." })}
+              className="w-full border-white/10 bg-transparent text-white hover:bg-white/5 hover:text-white"
+            >
               Google
             </Button>
             <p className="mt-4 text-center text-sm text-white/60">
