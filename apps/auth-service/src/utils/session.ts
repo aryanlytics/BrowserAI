@@ -3,10 +3,22 @@ import type { FastifyRequest, FastifyReply } from 'fastify'
 import { Session } from '../schema/mongo/session.model.js'
 import { config } from '../config/config.js'
 
-const SESSION_TTL = 7 * 24 * 60 * 60 * 1000 // 7 days in ms
-const SESSION_COOKIE_MAX_AGE = 7 * 24 * 60 * 60 // 7 days in seconds
+const DAY_MS            = 24 * 60 * 60 * 1000
+const SESSION_TTL       = 7 * DAY_MS
+const REFRESH_THRESHOLD = 2 * DAY_MS        // refresh when ≤ 2 days remain
+const COOKIE_MAX_AGE    = 7 * 24 * 60 * 60  // seconds
 
-// ─── Create a new session ─────────────────────────────────────────────────────
+// ─── Cookie options ───────────────────────────────────────────────────────────
+// Defined once — reused in createSession, validateSession, deleteSession
+
+const cookieOptions = {
+  path:     '/',
+  httpOnly: true,
+  secure:   config.NODE_ENV === 'production',
+  sameSite: 'lax' as const,
+}
+
+// ─── Create session ───────────────────────────────────────────────────────────
 
 export async function createSession(
   userId: string,
@@ -15,76 +27,67 @@ export async function createSession(
   reply: FastifyReply,
 ): Promise<void> {
   const token     = randomBytes(32).toString('hex')
-  const ipAddress = ip || 'unknown'
-  const agent     = userAgent || 'unknown'
   const expiresAt = new Date(Date.now() + SESSION_TTL)
 
-  await Session.create({ userId, token, ipAddress, userAgent: agent, expiresAt })
+  await Session.create({
+    userId,
+    token,
+    ipAddress: ip        || 'unknown',
+    userAgent: userAgent || 'unknown',
+    expiresAt,
+  })
 
   reply.setCookie('sessionToken', token, {
-    path:     '/',
-    httpOnly: true,
-    secure:   config.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge:   SESSION_COOKIE_MAX_AGE,
+    ...cookieOptions,
+    maxAge: COOKIE_MAX_AGE,
   })
 }
 
-// ─── Validate session on every protected request ──────────────────────────────
-// Checks:
-//   1. Cookie exists
-//   2. Session exists in DB and is not expired
-//   3. IP matches (prevents stolen cookie from different network)
-//   4. Extends session TTL if active (sliding expiry)
+// ─── Validate session ─────────────────────────────────────────────────────────
 
-export async function validateSession(request: FastifyRequest): Promise<{
-  userId: string
-  sessionId: string
-} | null> {
+export async function validateSession(
+  request: FastifyRequest,
+  reply: FastifyReply,
+): Promise<{ userId: string; sessionId: string } | null> {
   const token = request.cookies['sessionToken']
   if (!token) return null
 
   const session = await Session.findOne({ token })
 
-  // Not found or expired
-  if (!session || session.expiresAt < new Date()) {
-    if (session) await Session.deleteOne({ token }) // clean up expired
+  // Not found
+  if (!session) return null
+
+  // Expired — clean up both DB and cookie
+  if (session.expiresAt.getTime() < Date.now()) {
+    await Session.deleteOne({ _id: session._id })
+    reply.clearCookie('sessionToken', cookieOptions)
     return null
   }
 
-  const currentIp        = request.ip
-  const currentUserAgent = request.headers['user-agent'] || 'unknown'
-  const ipMatch          = session.ipAddress === currentIp
-  const uaMatch          = session.userAgent === currentUserAgent
+  const currentIp = request.ip
+  const currentUa = request.headers['user-agent'] || 'unknown'
+  const ipMatch   = session.ipAddress === currentIp
+  const uaMatch   = session.userAgent === currentUa
 
-  // Both mismatch → likely stolen cookie from different device + network → reject
+  // Both changed → likely stolen cookie → invalidate and force re-login
   if (!ipMatch && !uaMatch) {
-    request.log.warn(
-      `[Session] ⚠️  Both IP and UA mismatch — possible stolen cookie. Session: ${session._id}`
-    )
-    await Session.deleteOne({ token }) // invalidate compromised session
+    request.log.warn(`[Session] ⚠️  IP + UA both changed — invalidating session ${session._id}`)
+    await Session.deleteOne({ _id: session._id })
+    reply.clearCookie('sessionToken', cookieOptions)
     return null
   }
 
-  // Only IP mismatch → VPN / ISP change / mobile data switch → allow but log
-  if (!ipMatch) {
-    request.log.info(
-      `[Session] ℹ️  IP changed (${session.ipAddress} → ${currentIp}) — UA matches, allowing`
-    )
-  }
+  if (!ipMatch) request.log.info(`[Session] IP changed (${session.ipAddress} → ${currentIp}) — UA matches`)
+  if (!uaMatch) request.log.info(`[Session] UA changed — IP matches`)
 
-  // Only UA mismatch → browser update / different browser → allow but log
-  if (!uaMatch) {
-    request.log.info(
-      `[Session] ℹ️  UA changed — IP matches, allowing`
-    )
+  // Refresh only when ≤ 2 days remain (sliding expiry — not on every request)
+  const remaining = session.expiresAt.getTime() - Date.now()
+  if (remaining <= REFRESH_THRESHOLD) {
+    const newExpiresAt = new Date(Date.now() + SESSION_TTL)
+    await Session.updateOne({ _id: session._id }, { expiresAt: newExpiresAt })
+    reply.setCookie('sessionToken', token, { ...cookieOptions, maxAge: COOKIE_MAX_AGE })
+    request.log.info(`[Session] Refreshed session ${session._id}`)
   }
-
-  // Extend session (sliding expiry)
-  await Session.updateOne(
-    { token },
-    { expiresAt: new Date(Date.now() + SESSION_TTL) },
-  )
 
   return {
     userId:    session.userId.toString(),
@@ -92,18 +95,12 @@ export async function validateSession(request: FastifyRequest): Promise<{
   }
 }
 
-// ─── Delete session on logout ─────────────────────────────────────────────────
+// ─── Delete session ───────────────────────────────────────────────────────────
 
 export async function deleteSession(
   token: string,
   reply: FastifyReply,
 ): Promise<void> {
   await Session.deleteOne({ token })
-
-  reply.clearCookie('sessionToken', {
-    path:     '/',
-    httpOnly: true,
-    secure:   config.NODE_ENV === 'production',
-    sameSite: 'lax',
-  })
+  reply.clearCookie('sessionToken', cookieOptions)
 }

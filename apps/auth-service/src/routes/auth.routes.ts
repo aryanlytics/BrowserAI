@@ -225,38 +225,38 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
   })
 
 
-  // ─── Me (get current user) ─────────────────────────────────────────────────
-  fastify.get('/api/auth/app', async (request, reply) => {
-    const session = await validateSession(request)
+   // ─── Dashboard ─────────────────────────────────────────────────────────────────
 
-    if (!session) {
-      return reply.status(401).send({
-        statusCode: 401,
-        error: 'Unauthorized',
-        message: 'Not authenticated.',
-      })
-    }
+  fastify.get('/api/auth/dashboard', async (request, reply) => {
+  const session = await validateSession(request, reply)
 
-    const user = await User.findById(session.userId).select('-passwordHash')
-    if (!user) {
-      return reply.status(404).send({
-        statusCode: 404,
-        error: 'Not Found',
-        message: 'User not found.',
-      })
-    }
-
-    return reply.status(200).send({
-      success: true,
-      user: {
-        id:            user._id,
-        name:          user.name,
-        email:         user.email,
-        emailVerified: user.emailVerified,
-      },
+  if (!session) {
+    return reply.status(401).send({
+      statusCode: 401,
+      error: 'Unauthorized',
+      message: 'Not authenticated.',
     })
-  })
+  }
 
+  const user = await User.findById(session.userId)
+  if (!user) {
+    return reply.status(404).send({
+      statusCode: 404,
+      error: 'Not Found',
+      message: 'User not found.',
+    })
+  }
+
+  return reply.status(200).send({
+    success: true,
+    user: {
+      id:            user._id,
+      name:          user.name,
+      email:         user.email,
+      emailVerified: user.emailVerified,
+    },
+  })
+})
 }
 
 export default authRoutes
