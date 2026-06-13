@@ -52,13 +52,35 @@ export async function validateSession(request: FastifyRequest): Promise<{
     return null
   }
 
-  // IP mismatch — possible stolen cookie
-  if (session.ipAddress !== request.ip) {
-    request.log.warn(`[Session] ⚠️ IP mismatch for session ${session._id} — expected ${session.ipAddress}, got ${request.ip}`)
+  const currentIp        = request.ip
+  const currentUserAgent = request.headers['user-agent'] || 'unknown'
+  const ipMatch          = session.ipAddress === currentIp
+  const uaMatch          = session.userAgent === currentUserAgent
+
+  // Both mismatch → likely stolen cookie from different device + network → reject
+  if (!ipMatch && !uaMatch) {
+    request.log.warn(
+      `[Session] ⚠️  Both IP and UA mismatch — possible stolen cookie. Session: ${session._id}`
+    )
+    await Session.deleteOne({ token }) // invalidate compromised session
     return null
   }
 
-  // Extend session (sliding expiry) — active users stay logged in
+  // Only IP mismatch → VPN / ISP change / mobile data switch → allow but log
+  if (!ipMatch) {
+    request.log.info(
+      `[Session] ℹ️  IP changed (${session.ipAddress} → ${currentIp}) — UA matches, allowing`
+    )
+  }
+
+  // Only UA mismatch → browser update / different browser → allow but log
+  if (!uaMatch) {
+    request.log.info(
+      `[Session] ℹ️  UA changed — IP matches, allowing`
+    )
+  }
+
+  // Extend session (sliding expiry)
   await Session.updateOne(
     { token },
     { expiresAt: new Date(Date.now() + SESSION_TTL) },
