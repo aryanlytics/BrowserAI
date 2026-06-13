@@ -11,6 +11,7 @@ async function start() {
 
   // 2. Build app
   const app = Fastify({
+    trustProxy: true,
     logger: {
       level: config.NODE_ENV === 'production' ? 'warn' : 'info',
       transport: config.NODE_ENV !== 'production'
