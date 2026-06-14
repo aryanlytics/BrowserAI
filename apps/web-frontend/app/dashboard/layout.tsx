@@ -19,7 +19,7 @@ export default async function DashboardLayout({
 
   // 2. Query the API Gateway to validate the session on the backend
   try {
-    await api.get('/api/auth/dashborad', {
+    await api.get('/api/auth/dashboard', {
       headers: {
         // Forward the session cookie to the API Gateway so the server can validate it
         'Cookie': `sessionToken=${token}`,
