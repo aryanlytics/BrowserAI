@@ -102,7 +102,7 @@ const SignUp = () => {
         duration: 6000,
       });
 
-      router.push(`/verify-otp?email=${encodeURIComponent(formData.email)}`);
+      router.push(`/verifyotp?email=${encodeURIComponent(formData.email)}`);
     } catch (err) {
       const axiosError = err as { response?: { data?: { message?: string } } };
       const message = axiosError.response?.data?.message ?? "Something went wrong. Please try again.";

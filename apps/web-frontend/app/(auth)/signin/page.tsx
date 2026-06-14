@@ -73,7 +73,7 @@ const SignIn = () => {
           id: toastId,
           description: errorData.message,
         });
-        router.push(`/verify-otp?email=${encodeURIComponent(formData.email)}`);
+        router.push(`/verifyotp?email=${encodeURIComponent(formData.email)}`);
       } else {
         toast.error("Sign-in failed", {
           id: toastId,

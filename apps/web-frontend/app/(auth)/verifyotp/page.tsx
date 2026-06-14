@@ -69,7 +69,7 @@ const VerifyOtpContent = () => {
     const toastId = toast.loading("Verifying your code...");
 
     try {
-      await api.post('/api/auth/verify-otp', {
+      await api.post('/api/auth/verifyotp', {
         email,
         otp: result.data.otp,
       });
@@ -97,7 +97,7 @@ const VerifyOtpContent = () => {
     const toastId = toast.loading("Resending code...");
 
     try {
-      await api.post('/api/auth/resend-otp', { email });
+      await api.post('/api/auth/resendotp', { email });
       toast.success("Verification code resent!", {
         id: toastId,
         description: "Please check your inbox.",

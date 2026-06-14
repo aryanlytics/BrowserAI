@@ -6,8 +6,9 @@ import { createSession, deleteSession, validateSession } from '../utils/session.
 import { registerSchema, verifyOtpSchema, loginSchema } from '../schema/zod/auth.js'
 import { redis } from '../config/database.js'
 import { Resend } from 'resend'
+import { config } from '../config/config.js'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+const resend = new Resend(config.RESEND_API_KEY)
 
 const authRoutes: FastifyPluginAsync = async (fastify) => {
 
@@ -76,7 +77,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
   })
 
   // ─── Verify OTP ────────────────────────────────────────────────────────────
-  fastify.post('/api/auth/verify-otp', async (request, reply) => {
+  fastify.post('/api/auth/verifyotp', async (request, reply) => {
     const result = verifyOtpSchema.safeParse(request.body)
     if (!result.success) {
       return reply.status(400).send({
@@ -161,7 +162,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
 
 
   // ─── Login ─────────────────────────────────────────────────────────────────
-  fastify.post('/api/auth/login', async (request, reply) => {
+  fastify.post('/api/auth/signin', async (request, reply) => {
     const result = loginSchema.safeParse(request.body)
     if (!result.success) {
       return reply.status(400).send({
@@ -174,7 +175,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
     const { email, password } = result.data
 
     try {
-      const user = await User.findOne({ email })
+      const user = await User.findOne({ email }).select('+passwordHash')
 
       // Same error for wrong email and wrong password — prevents user enumeration
       if (!user || !verifyPassword(password, user.passwordHash)) {

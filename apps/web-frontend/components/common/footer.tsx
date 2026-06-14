@@ -17,7 +17,7 @@ const Footer = () => {
               <Mic className='w-5 h-5 text-blue-400' />
             </div>
             <Link className='font-extrabold text-2xl tracking-tight text-white' href='/'>
-              Browser<span className='text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500'>AI</span>
+              Browser<span className='text-transparent bg-clip-text bg-linear-to-r from-blue-400 to-purple-500'>AI</span>
             </Link>
           </div>
           <p className="text-white/60 text-sm mb-6">
@@ -65,7 +65,7 @@ const Footer = () => {
               placeholder="Enter your email" 
               className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:ring-blue-500"
             />
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">Subscribe</Button>
+            <Button type="button" className="bg-blue-600 hover:bg-blue-700 text-white">Subscribe</Button>
           </form>
         </div>
       </div>
