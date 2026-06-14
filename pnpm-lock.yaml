@@ -60,6 +60,9 @@ importers:
 
   apps/auth-service:
     dependencies:
+      '@browser-ai/validators':
+        specifier: workspace:*
+        version: link:../../packages/validators
       '@fastify/cookie':
         specifier: ^9.3.1
         version: 9.4.0
@@ -103,6 +106,9 @@ importers:
       '@base-ui/react':
         specifier: ^1.5.0
         version: 1.5.0(@types/react@19.2.2)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@browser-ai/validators':
+        specifier: workspace:*
+        version: link:../../packages/validators
       '@radix-ui/react-slot':
         specifier: ^1.2.4
         version: 1.2.4(@types/react@19.2.2)(react@19.2.4)
@@ -208,6 +214,16 @@ importers:
         version: 8.50.0(eslint@9.39.1(jiti@2.7.0))(typescript@5.9.2)
 
   packages/typescript-config: {}
+
+  packages/validators:
+    dependencies:
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+    devDependencies:
+      typescript:
+        specifier: ^5
+        version: 5.9.2
 
 packages:
 
