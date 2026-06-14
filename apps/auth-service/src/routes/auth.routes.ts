@@ -226,6 +226,80 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
   })
 
 
+  // ─── Resend OTP ────────────────────────────────────────────────────────────
+  fastify.post('/api/auth/resendotp', async (request, reply) => {
+    const { email } = request.body as { email?: string }
+
+    if (!email || typeof email !== 'string') {
+      return reply.status(400).send({
+        statusCode: 400,
+        error: 'Bad Request',
+        message: 'Email is required.',
+      })
+    }
+
+    try {
+      const user = await User.findOne({ email: email.trim().toLowerCase() })
+
+      if (!user) {
+        // Return 200 to prevent user enumeration
+        return reply.status(200).send({
+          success: true,
+          message: 'If an account with that email exists, a new code has been sent.',
+        })
+      }
+
+      if (user.emailVerified) {
+        return reply.status(409).send({
+          statusCode: 409,
+          error: 'Conflict',
+          message: 'This email is already verified. Please sign in.',
+        })
+      }
+
+      // Generate a fresh OTP and reset the 2-minute TTL
+      const otp = generateOtp()
+      await redis.set(`otp:${email}`, otp, 'EX', 120)
+
+      // Resend email
+      try {
+        await resend.emails.send({
+          from:    'onboarding@resend.dev',
+          to:      email,
+          subject: 'New verification code — BrowserAI',
+          html: `
+            <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:24px;border:1px solid #eee;border-radius:8px;">
+              <h2 style="margin-bottom:8px;">New verification code</h2>
+              <p>Your new verification code:</p>
+              <h1 style="color:#2563eb;letter-spacing:6px;font-size:36px;margin:16px 0;">${otp}</h1>
+              <p style="color:#888;font-size:13px;">Expires in 2 minutes. If you didn't request this, ignore this email.</p>
+            </div>
+          `,
+        })
+      } catch (emailErr) {
+        request.log.error(emailErr, 'Failed to resend verification email')
+        return reply.status(500).send({
+          statusCode: 500,
+          error: 'Internal Server Error',
+          message: 'Failed to send verification email. Please try again.',
+        })
+      }
+
+      return reply.status(200).send({
+        success: true,
+        message: 'A new verification code has been sent to your email.',
+      })
+    } catch (err) {
+      request.log.error(err, 'Resend OTP error')
+      return reply.status(500).send({
+        statusCode: 500,
+        error: 'Internal Server Error',
+        message: 'Failed to resend OTP.',
+      })
+    }
+  })
+
+
    // ─── Dashboard ─────────────────────────────────────────────────────────────────
 
   fastify.get('/api/auth/dashboard', async (request, reply) => {
