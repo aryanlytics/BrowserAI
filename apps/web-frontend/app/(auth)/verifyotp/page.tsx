@@ -18,7 +18,7 @@ import {
 
 import api from '@/lib/api';
 import { toast } from 'sonner';
-import { verifyOtpSchema } from '@/models/Zod';
+import { verifyOtpSchema } from '@browser-ai/validators/zod/auth';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const COUNTDOWN_SECONDS = 120; // 2 minutes
