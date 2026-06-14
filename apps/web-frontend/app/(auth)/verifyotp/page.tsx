@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, Suspense, useEffect, useRef, useCallback } from 'react';
+import React, { useState, Suspense, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Sparkles, KeyRound, AlertCircle, Loader2, RefreshCw, Clock } from 'lucide-react';
@@ -42,18 +42,20 @@ const VerifyOtpContent = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   // ── Countdown state ──────────────────────────────────────────────────────
+  // Initialized to full duration so the first render is already correct —
+  // no need to call setState synchronously inside an effect.
   const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS);
   const [canResend, setCanResend] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  // Incrementing this value re-triggers the timer effect (used on resend).
+  const [resetKey, setResetKey] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // ── Start / reset countdown ───────────────────────────────────────────────
-  const startCountdown = useCallback(() => {
-    // Clear any existing timer first
+  // ── Timer effect ──────────────────────────────────────────────────────────
+  // This effect ONLY sets up / tears down setInterval (an external subscription).
+  // No synchronous setState calls live here — state is reset in event handlers.
+  useEffect(() => {
     if (timerRef.current) clearInterval(timerRef.current);
-
-    setCountdown(COUNTDOWN_SECONDS);
-    setCanResend(false);
 
     timerRef.current = setInterval(() => {
       setCountdown((prev) => {
@@ -66,15 +68,12 @@ const VerifyOtpContent = () => {
         return prev - 1;
       });
     }, 1000);
-  }, []);
 
-  // Start timer on mount, clear on unmount
-  useEffect(() => {
-    startCountdown();
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [startCountdown]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resetKey]);
 
   // ── Input handler ────────────────────────────────────────────────────────
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -147,9 +146,12 @@ const VerifyOtpContent = () => {
         description: 'Please check your inbox for a fresh code.',
       });
 
-      // Reset OTP input and restart the 2-minute countdown
+      // Reset OTP input and restart the 2-minute countdown.
+      // State resets happen here (event handler), NOT inside an effect.
       setFormData({ otp: '' });
-      startCountdown();
+      setCountdown(COUNTDOWN_SECONDS);
+      setCanResend(false);
+      setResetKey((k) => k + 1); // ← re-triggers the timer useEffect
     } catch (err) {
       const axiosError = err as { response?: { data?: { message?: string } } };
       toast.error('Resend failed', {
