@@ -6,7 +6,6 @@ const required = [
   'ALLOWED_ORIGINS',
   'BASE_URL',
   'RESEND_API_KEY',
-  'INTERNAL_SECRET',
 ] as const
 
 for (const key of required) {
@@ -36,7 +35,4 @@ export const config = {
   // Must NOT be the internal service address (4001).
   BASE_URL: process.env.BASE_URL || 'http://localhost:4000',
   RESEND_API_KEY: process.env.RESEND_API_KEY!,
-  
-  // Internal service-to-service secret — must match api-gateway
-  INTERNAL_SECRET: process.env.INTERNAL_SECRET!,
 } as const
