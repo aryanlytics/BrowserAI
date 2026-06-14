@@ -30,11 +30,11 @@ import {
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
-import { signUpSchema } from "@/models/Zod";
+import { registerSchema } from "@browser-ai/validators/zod/auth";
 
 
 
-  
+
 // ─── Component ────────────────────────────────────────────────────────────────
 const SignUp = () => {
   const router = useRouter();
@@ -70,7 +70,7 @@ const SignUp = () => {
     e.preventDefault();
     
     // ── Client-side validation ────────────────────────────────────────────
-    const result = signUpSchema.safeParse(formData);
+    const result = registerSchema.safeParse(formData);
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
       result.error.issues.forEach((issue) => {
