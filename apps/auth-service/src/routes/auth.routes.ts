@@ -3,7 +3,7 @@ import { User } from '../schema/mongo/user.model.js'
 import { hashPassword, verifyPassword } from '../utils/password.js'
 import { generateOtp } from '../utils/otp.js'
 import { createSession, deleteSession, validateSession } from '../utils/session.js'
-import { registerSchema, verifyOtpSchema, loginSchema } from '../schema/zod/auth.js'
+import { registerSchema, loginSchema, verifyOtpSchema } from "@browser-ai/validators/zod/auth";
 import { redis } from '../config/database.js'
 import { Resend } from 'resend'
 import { config } from '../config/config.js'
