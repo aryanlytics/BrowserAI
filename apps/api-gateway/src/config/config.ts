@@ -1,7 +1,6 @@
 import 'dotenv/config'
 
 const required = [
-  'INTERNAL_SECRET',
   'AUTH_SERVICE_URL',
   'ALLOWED_ORIGINS',
 ] as const
@@ -24,7 +23,4 @@ export const config = {
   // CORS — comma-separated origins in .env
   // e.g. ALLOWED_ORIGINS=http://localhost:3000,https://yourdomain.com
   ALLOWED_ORIGINS: (process.env.ALLOWED_ORIGINS || 'http://localhost:3000').split(','),
-
-  // Internal service-to-service secret — must match auth-service
-  INTERNAL_SECRET: process.env.INTERNAL_SECRET!,
 } as const
