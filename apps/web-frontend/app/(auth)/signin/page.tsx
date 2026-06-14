@@ -7,15 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { z } from 'zod';
 import { useRouter } from 'next/navigation';
+import axios from 'axios';
 import api from '@/lib/api';
 import { toast } from 'sonner';
+import {loginSchema} from '@browser-ai/validators/zod/auth';
 
-const signInSchema = z.object({
-  email: z.string().trim().email("Please enter a valid email address"),
-  password: z.string().trim().min(1, "Password is required"),
-});
+
 
 const SignIn = () => {
   const router = useRouter();
@@ -42,7 +40,7 @@ const SignIn = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    const result = signInSchema.safeParse(formData);
+    const result = loginSchema.safeParse(formData);
     
     if (!result.success) {
       const formattedErrors: Record<string, string> = {};
@@ -65,24 +63,36 @@ const SignIn = () => {
 
       toast.success("Signed in successfully!", { id: toastId });
       router.push('/dashboard');
+
     } catch (err) {
-      const axiosError = err as { response?: { data?: { code?: string; message?: string } } };
-      const errorData = axiosError.response?.data;
-      if (errorData?.code === 'EMAIL_NOT_VERIFIED') {
-        toast.error("Email not verified", {
-          id: toastId,
-          description: errorData.message,
-        });
-        router.push(`/verifyotp?email=${encodeURIComponent(formData.email)}`);
-      } else {
-        toast.error("Sign-in failed", {
-          id: toastId,
-          description: errorData?.message || "Invalid email or password.",
-        });
+    // ── Fix 2: use axios isAxiosError instead of manual cast ────────────
+    if (axios.isAxiosError(err)) {
+      const status  = err.response?.status
+      const message = err.response?.data?.message
+
+      // ── Fix 3: check status code, not a code field that doesn't exist ─
+      if (status === 403) {
+        toast.error('Email not verified', {
+          id:          toastId,
+          description: message || 'Please verify your email before signing in.',
+        })
+        router.push(`/verifyotp?email=${encodeURIComponent(formData.email)}`)
+        return
       }
-    } finally {
-      setIsLoading(false);
+
+      toast.error('Signin failed', {
+        id:          toastId,
+        description: message || 'Invalid email or password.',
+      })
+    } else {
+      toast.error('Unexpected error', {
+        id:          toastId,
+        description: 'Something went wrong. Please try again.',
+      })
     }
+  } finally {
+    setIsLoading(false)
+  }
   };
 
   return (
