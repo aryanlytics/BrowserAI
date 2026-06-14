@@ -194,7 +194,7 @@ const VerifyOtpContent = () => {
               </button>
             </p>
             <p className="text-center text-xs text-white/40 mt-2">
-              <Link href="/sign-in" className="hover:text-white transition-colors">
+              <Link href="/signin" className="hover:text-white transition-colors">
                 Back to sign in
               </Link>
             </p>
