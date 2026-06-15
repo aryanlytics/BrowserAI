@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { email, z } from 'zod'
 
 // ─── Register ─────────────────────────────────────────────────────────────────
 
@@ -57,6 +57,15 @@ export const loginSchema = z.object({
     .min(1, 'Password is required'),
 })
 
+
+
+export const resetPasswordSchema = z.object({
+  email: z
+  .string()
+  .trim()
+  .email("Please enter a valid email address")
+  .toLowerCase
+})
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type RegisterInput  = z.infer<typeof registerSchema>
