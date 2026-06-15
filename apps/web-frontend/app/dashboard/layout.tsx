@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import React from 'react'
 import api from '@/lib/api'
 import axios from 'axios'
+import Navbar from '@/components/protected/nav'
 
 export default async function DashboardLayout({
   children,
@@ -11,11 +12,6 @@ export default async function DashboardLayout({
 }) {
   const cookieStore = await cookies()
   const token = cookieStore.get('sessionToken')?.value
-
-  // 1. If cookie is missing, redirect immediately
-  if (!token) {
-    redirect('/sign-in?error=login_required')
-  }
 
   // 2. Query the API Gateway to validate the session on the backend
   try {
@@ -33,16 +29,18 @@ export default async function DashboardLayout({
     : undefined
 
   if (status === 401 || status === 403) {
-    redirect('/sign-in?error=session_expired')
+    redirect('/signin?error=session_expired')
   }
 
     // Network errors or gateway down
-    redirect('/sign-in?error=server_error')
+    redirect('/signin?error=server_error')
   }
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white">
-      {/* You can put common dashboard layout elements here, like Sidebar or Header */}
+     
+      <Navbar />
+    
       {children}
     </div>
   )
