@@ -11,7 +11,7 @@ const Navbar = () => {
           <Mic className='w-5 h-5 text-blue-400' />
         </div>
         <Link className='font-extrabold text-2xl tracking-tight text-white' href='/'>
-          Browser<span className='text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500'>AI</span>
+          Browser<span className='text-transparent bg-clip-text bg-linear-to-r from-blue-400 to-purple-500'>AI</span>
         </Link>
       </div>
       <div className='hidden md:flex items-center gap-8 text-sm font-medium text-white/70'>
