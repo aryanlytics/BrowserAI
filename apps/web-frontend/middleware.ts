@@ -9,13 +9,13 @@ export function middleware(request: NextRequest) {
   if (pathname.startsWith('/dashboard')) {
     if (!token) {
       // Redirect to sign-in if accessing a dashboard page without a token
-      const signInUrl = new URL('/sign-in', request.url)
+      const signInUrl = new URL('/signin', request.url)
       return NextResponse.redirect(signInUrl)
     }
   }
 
   // 2. Auth routes check (redirect already logged-in users away from signup/signin)
-  if (pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up') || pathname.startsWith('/verify-otp')) {
+  if (pathname.startsWith('/signin') || pathname.startsWith('/signup') || pathname.startsWith('/verifyotp')) {
     if (token) {
       // Redirect to dashboard if logged-in user tries to open auth pages
       const dashboardUrl = new URL('/dashboard', request.url)
@@ -30,8 +30,8 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/dashboard/:path*',
-    '/sign-in',
-    '/sign-up',
-    '/verify-otp',
+    '/signin',
+    '/signup',
+    '/verifyotp',
   ],
 }
