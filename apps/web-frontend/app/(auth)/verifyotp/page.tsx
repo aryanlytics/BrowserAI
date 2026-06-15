@@ -86,20 +86,25 @@ const VerifyOtpContent = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const result = verifyOtpSchema.safeParse(formData);
+    // Validate email (from URL) + otp (from input) together.
+    // The shared schema requires both fields — passing only formData (which
+    // only has otp) caused validation to always fail silently with an
+    // invisible email error, making the button appear to do nothing.
+    const result = verifyOtpSchema.safeParse({ email, otp: formData.otp });
     if (!result.success) {
+      // If email is missing from the URL, show a toast instead of a silent field error
+      const emailIssue = result.error.issues.find((i) => i.path[0] === 'email');
+      if (emailIssue) {
+        toast.error('Missing email address', {
+          description: 'Please register again or check your signup link.',
+        });
+        return;
+      }
       const fieldErrors: Record<string, string> = {};
       result.error.issues.forEach((issue) => {
         fieldErrors[issue.path[0] as string] = issue.message;
       });
       setErrors(fieldErrors);
-      return;
-    }
-
-    if (!email) {
-      toast.error('Missing email address', {
-        description: 'Please register again or check your signup link.',
-      });
       return;
     }
 
