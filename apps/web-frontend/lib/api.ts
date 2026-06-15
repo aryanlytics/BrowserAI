@@ -4,7 +4,7 @@ import axios from "axios";
 
 
 const api = axios.create({
-  baseURL: config.NEXT_PUBLIC_API_GATEWAY_URL || "http://localhost:4000",
+  baseURL: config.apiGatewayUrl,
   withCredentials: true,            // send cookies
 });
 
