@@ -21,7 +21,7 @@ const Navbar = () => {
         <Link className='hover:text-white transition-colors duration-200' href="/resources">Resources</Link>
       </div>
       <div className='flex items-center gap-4'>
-        <Link href="/sign-in">
+        <Link href="/signin">
           <Button className='bg-white text-black hover:bg-white/90 rounded-full px-6'>
             Sign in
           </Button>
