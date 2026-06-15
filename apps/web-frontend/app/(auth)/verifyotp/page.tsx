@@ -23,26 +23,24 @@ const VerifyOtpContent = () => {
   const [otpError, setOtpError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  // State initialized to full duration — no need to setState inside the effect.
   const [seconds, setSeconds] = useState(COUNTDOWN);
+  // Incrementing this restarts the timer effect (used after resend).
+  const [resetKey, setResetKey] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // ── Countdown ─────────────────────────────────────────────────────────────
-  const startCountdown = (from = COUNTDOWN) => {
+  // Effect only sets up the interval — no synchronous setState calls here.
+  useEffect(() => {
     if (timerRef.current) clearInterval(timerRef.current);
-    setSeconds(from);
     timerRef.current = setInterval(() => {
       setSeconds((prev) => {
         if (prev <= 1) { clearInterval(timerRef.current!); timerRef.current = null; return 0; }
         return prev - 1;
       });
     }, 1000);
-  };
-
-  useEffect(() => {
-    startCountdown();
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [resetKey]);
 
   const canResend = seconds === 0;
   const mm = String(Math.floor(seconds / 60)).padStart(2, '0');
@@ -88,7 +86,10 @@ const VerifyOtpContent = () => {
       toast.success('New code sent!', { id: toastId, description: 'Check your inbox.' });
       setOtp('');
       setOtpError('');
-      startCountdown();
+      // Reset state in the event handler (allowed), then bump resetKey
+      // to re-trigger the timer effect.
+      setSeconds(COUNTDOWN);
+      setResetKey((k) => k + 1);
     } catch (err) {
       const msg = (err as { response?: { data?: { message?: string } } }).response?.data?.message;
       toast.error('Resend failed', { id: toastId, description: msg || 'Try again.' });
