@@ -147,7 +147,6 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
   })
 
   
-  
   // ─── Resend OTP ────────────────────────────────────────────────────────────
   fastify.post('/api/auth/resendotp', async (request, reply) => {
     const { email } = request.body as { email?: string }
