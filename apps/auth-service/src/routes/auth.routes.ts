@@ -3,7 +3,7 @@ import { User } from '../schema/mongo/user.model.js'
 import { hashPassword, verifyPassword } from '../utils/password.js'
 import { generateOtp } from '../utils/otp.js'
 import { createSession, deleteSession, validateSession } from '../utils/session.js'
-import { registerSchema, loginSchema, verifyOtpSchema } from "@browser-ai/validators/zod/auth";
+import { registerSchema, loginSchema, verifyOtpSchema, forgetPasswordSchema, resetPasswordSchema } from "@browser-ai/validators/zod/auth";
 import { redis } from '../config/database.js'
 import { Resend } from 'resend'
 import { config } from '../config/config.js'
@@ -146,7 +146,6 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
     }
   })
 
-  
   // ─── Resend OTP ────────────────────────────────────────────────────────────
   fastify.post('/api/auth/resendotp', async (request, reply) => {
     const { email } = request.body as { email?: string }
@@ -219,9 +218,86 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       })
     }
   })
+
+  // ─── Logout ────────────────────────────────────────────────────────────────
+  fastify.post('/api/auth/logout', async (request, reply) => {
+    const token = request.cookies['sessionToken']
+
+    if (token) {
+      await deleteSession(token, reply)
+    }
+
+    return reply.status(200).send({
+      success: true,
+      message: 'Logged out successfully.',
+    })
+  })
+
+  // ─── Login ─────────────────────────────────────────────────────────────────
+  fastify.post('/api/auth/signin', async (request, reply) => {
+    const result = loginSchema.safeParse(request.body)
+    if (!result.success) {
+      return reply.status(400).send({
+        statusCode: 400,
+        error: 'Bad Request',
+        message: result.error.issues[0]?.message || 'Invalid login details',
+      })
+    }
+    
+    const { email, password } = result.data
+    
+    try {
+      const user = await User.findOne({ email }).select('+passwordHash')
+      
+      // Same error for wrong email and wrong password — prevents user enumeration
+      if (!user || !verifyPassword(password, user.passwordHash)) {
+        return reply.status(401).send({
+          statusCode: 401,
+          error: 'Unauthorized',
+          message: 'Invalid email or password.',
+        })
+      }
+      
+      if (!user.emailVerified) {
+        return reply.status(403).send({
+          statusCode: 403,
+          error: 'Forbidden',
+          message: 'Please verify your email before logging in.',
+        })
+      }
+      
+      // Create session — extract only what's needed
+      try {
+        await createSession(
+          user._id.toString(),
+          request.ip,
+          request.headers['user-agent'] || 'unknown',
+          reply,
+        )
+      } catch (sessionErr) {
+        request.log.error(sessionErr, 'Failed to create session after login')
+        return reply.status(500).send({
+          statusCode: 500,
+          error: 'Internal Server Error',
+          message: 'Failed to create session. Please try again.',
+        })
+      }
+      
+      return reply.status(200).send({
+        success: true,
+        message: 'Logged in successfully.',
+      })
+    } catch (err) {
+      request.log.error(err, 'Login error')
+      return reply.status(500).send({
+        statusCode: 500,
+        error: 'Internal Server Error',
+        message: 'Failed to process login.',
+      })
+    }
+  })
   
   // ─── Forgot Password OTP ────────────────────────────────────────────────────
-
   fastify.post('/api/auth/forgotpassword', async (request, reply) => {
     const result = forgetPasswordSchema.safeParse(request.body)
     
@@ -292,89 +368,106 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
     }
   })
 
-  // ─── Login ─────────────────────────────────────────────────────────────────
-  fastify.post('/api/auth/signin', async (request, reply) => {
-    const result = loginSchema.safeParse(request.body)
-    if (!result.success) {
+  // ─── Verify Forgot Password OTP ───────────────────────────────────────────────
+  fastify.post('/api/auth/verifyforgotpassword', async (request, reply) => {
+    const result = verifyOtpSchema.safeParse(request.body)
+    if(!result.success){
       return reply.status(400).send({
         statusCode: 400,
         error: 'Bad Request',
-        message: result.error.issues[0]?.message || 'Invalid login details',
+        message: result.error.issues[0]?.message || 'Invalid verify otp details',
       })
     }
-    
-    const { email, password } = result.data
-    
-    try {
-      const user = await User.findOne({ email }).select('+passwordHash')
-      
-      // Same error for wrong email and wrong password — prevents user enumeration
-      if (!user || !verifyPassword(password, user.passwordHash)) {
+
+    const { email, otp } = result.data
+
+    try{
+      const storedOtp = await redis.get(`otp:${email}`)
+      if(!storedOtp){
+        return reply.status(404).send({
+          statusCode: 404,
+          error: 'Not Found',
+          message: 'OTP not found or expired.',
+        })
+      }
+
+      if(storedOtp !== otp){
         return reply.status(401).send({
           statusCode: 401,
           error: 'Unauthorized',
-          message: 'Invalid email or password.',
+          message: 'Invalid OTP.',
         })
       }
-      
-      if (!user.emailVerified) {
-        return reply.status(403).send({
-          statusCode: 403,
-          error: 'Forbidden',
-          message: 'Please verify your email before logging in.',
-        })
-      }
-      
-      // Create session — extract only what's needed
-      try {
-        await createSession(
-          user._id.toString(),
-          request.ip,
-          request.headers['user-agent'] || 'unknown',
-          reply,
-        )
-      } catch (sessionErr) {
-        request.log.error(sessionErr, 'Failed to create session after login')
-        return reply.status(500).send({
-          statusCode: 500,
-          error: 'Internal Server Error',
-          message: 'Failed to create session. Please try again.',
-        })
-      }
-      
+
+      // Remove OTP after verification
+      await redis.del(`otp:${email}`)
+
       return reply.status(200).send({
         success: true,
-        message: 'Logged in successfully.',
+        message: 'OTP verified successfully',
       })
-    } catch (err) {
-      request.log.error(err, 'Login error')
+    }
+    catch(error){
+      request.log.error(error, 'Verify OTP error')
       return reply.status(500).send({
         statusCode: 500,
         error: 'Internal Server Error',
-        message: 'Failed to process login.',
+        message: 'Failed to verify OTP.',
+      })
+    }
+  })
+
+  // ─── Reset Password ─────────────────────────────────────────────────────────
+  fastify.post('/api/auth/resetpassword', async (request, reply) => {
+    const result = resetPasswordSchema.safeParse(request.body)
+    if(!result.success){
+      return reply.status(400).send({
+        statusCode: 400,
+        error: 'Bad Request',
+        message: result.error.issues[0]?.message || 'Invalid reset password details',
+      })
+    }
+
+    const { email, newPassword } = result.data
+
+    try{
+      const existingUser = await User.findOne({ email })
+      if(!existingUser){
+        return reply.status(404).send({
+          statusCode: 404,
+          error: 'Not Found',
+          message: 'An account with this email does not exist.',
+        })
+      }
+
+      if(!existingUser.emailVerified){
+        return reply.status(409).send({
+          statusCode: 409,
+          error: 'Conflict',
+          message: 'This email is not verified. Please verify your email.',
+        })
+      }
+
+      const passwordHash = hashPassword(newPassword)
+      existingUser.passwordHash = passwordHash
+      await existingUser.save()
+
+      return reply.status(200).send({
+        success: true,
+        message: 'Password reset successfully',
+      })
+    }
+    catch(error){
+      request.log.error(error, 'Reset password error')
+      return reply.status(500).send({
+        statusCode: 500,
+        error: 'Internal Server Error',
+        message: 'Failed to reset password.',
       })
     }
   })
   
-  // ─── Logout ────────────────────────────────────────────────────────────────
-  fastify.post('/api/auth/logout', async (request, reply) => {
-    const token = request.cookies['sessionToken']
-
-    if (token) {
-      await deleteSession(token, reply)
-    }
-
-    return reply.status(200).send({
-      success: true,
-      message: 'Logged out successfully.',
-    })
-  })
-  
-  
-
-
    // ─── Dashboard ─────────────────────────────────────────────────────────────────
-
   fastify.get('/api/auth/dashboard', async (request, reply) => {
   const session = await validateSession(request, reply)
 
