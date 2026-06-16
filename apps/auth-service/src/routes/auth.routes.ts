@@ -467,37 +467,25 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
     }
   })
   
-   // ─── Dashboard ─────────────────────────────────────────────────────────────────
+   // ─── Dashboard ───────────────────────────────────────────────────────────────
+  // validateSession already populates the user in the same DB query,
+  // so no second User.findById call is needed here.
   fastify.get('/api/auth/dashboard', async (request, reply) => {
-  const session = await validateSession(request, reply)
+    const session = await validateSession(request, reply)
 
-  if (!session) {
-    return reply.status(401).send({
-      statusCode: 401,
-      error: 'Unauthorized',
-      message: 'Not authenticated.',
+    if (!session) {
+      return reply.status(401).send({
+        statusCode: 401,
+        error: 'Unauthorized',
+        message: 'Not authenticated.',
+      })
+    }
+
+    return reply.status(200).send({
+      success: true,
+      user: session.user,  // populated inside validateSession — zero extra DB calls
     })
-  }
-
-  const user = await User.findById(session.userId)
-  if (!user) {
-    return reply.status(404).send({
-      statusCode: 404,
-      error: 'Not Found',
-      message: 'User not found.',
-    })
-  }
-
-  return reply.status(200).send({
-    success: true,
-    user: {
-      id:            user._id,
-      name:          user.name,
-      email:         user.email,
-      emailVerified: user.emailVerified,
-    },
   })
-})
 }
 
 export default authRoutes
