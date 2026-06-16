@@ -37,6 +37,12 @@ const SignIn = () => {
     }
   };
 
+  const handlepassword = () => {
+    router.push('/forgotpassword');
+  };
+    
+  
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
@@ -66,30 +72,30 @@ const SignIn = () => {
 
     } catch (err) {
     // ── Fix 2: use axios isAxiosError instead of manual cast ────────────
-    if (axios.isAxiosError(err)) {
-      const status  = err.response?.status
-      const message = err.response?.data?.message
+      if (axios.isAxiosError(err)) {
+        const status  = err.response?.status
+        const message = err.response?.data?.message
 
-      // ── Fix 3: check status code, not a code field that doesn't exist ─
-      if (status === 403) {
-        toast.error('Email not verified', {
+        // ── Fix 3: check status code, not a code field that doesn't exist ─
+        if (status === 403) {
+          toast.error('Email not verified', {
+            id:          toastId,
+            description: message || 'Please verify your email before signing in.',
+          })
+          router.push(`/verifyotp?email=${encodeURIComponent(formData.email)}`)
+          return
+        }
+
+        toast.error('Signin failed', {
           id:          toastId,
-          description: message || 'Please verify your email before signing in.',
+          description: message || 'Invalid email or password.',
         })
-        router.push(`/verifyotp?email=${encodeURIComponent(formData.email)}`)
-        return
+      } else {
+        toast.error('Unexpected error', {
+          id:          toastId,
+          description: 'Something went wrong. Please try again.',
+        })
       }
-
-      toast.error('Signin failed', {
-        id:          toastId,
-        description: message || 'Invalid email or password.',
-      })
-    } else {
-      toast.error('Unexpected error', {
-        id:          toastId,
-        description: 'Something went wrong. Please try again.',
-      })
-    }
   } finally {
     setIsLoading(false)
   }
@@ -147,9 +153,9 @@ const SignIn = () => {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password" className={errors.password ? "text-red-400" : ""}>Password</Label>
-                  <Link href="/forgot-password" className="text-xs text-blue-400 hover:text-blue-300">
+                  <Button onClick={handlepassword} className="text-xs text-blue-400 hover:text-blue-300">
                     Forgot password?
-                  </Link>
+                  </Button>
                 </div>
                 <div className="relative">
                   <Lock className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${errors.password ? "text-red-400" : "text-white/40"}`} />

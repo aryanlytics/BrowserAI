@@ -221,6 +221,16 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
     }
   })
   
+  // ─── Resend OTP ────────────────────────────────────────────────────────────
+
+  fastify.post('/api/auth/forgotpassword',async (request, reply) => {
+    try {
+      
+    } catch (error) {
+      
+    }
+  })
+
   // ─── Login ─────────────────────────────────────────────────────────────────
   fastify.post('/api/auth/signin', async (request, reply) => {
     const result = loginSchema.safeParse(request.body)
