@@ -221,13 +221,75 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
     }
   })
   
-  // ─── Resend OTP ────────────────────────────────────────────────────────────
+  // ─── Forgot Password OTP ────────────────────────────────────────────────────
 
-  fastify.post('/api/auth/forgotpassword',async (request, reply) => {
-    try {
-      
-    } catch (error) {
-      
+  fastify.post('/api/auth/forgotpassword', async (request, reply) => {
+    const result = forgetPasswordSchema.safeParse(request.body)
+    
+    if(!result.success){
+      return reply.status(400).send({
+        statusCode: 400,
+        error: 'Bad Request',
+        message: result.error.issues[0]?.message || 'Invalid forget password details',
+      })
+    }
+
+    const { email } = result.data
+
+    try{
+      const existingUser = await User.findOne({ email })
+      if (!existingUser) {
+        return reply.status(404).send({
+          statusCode: 404,
+          error: 'Not Found',
+          message: 'An account with this email does not exist.',
+        })
+      }
+
+      if(!existingUser.emailVerified){
+        return reply.status(409).send({
+          statusCode: 409,
+          error: 'Conflict',
+          message: 'This email is not verified. Please verify your email.',
+        })
+      }
+      // Generate OTP — expires in 2 minutes
+      const otp = generateOtp()
+      await redis.set(`otp:${email}`, otp, 'EX', 120)
+
+      // Send email
+      try {
+        await resend.emails.send({
+          from:    'onboarding@resend.dev',
+          to:      email,
+          subject: 'Verify your email — BrowserAI',
+          html: `
+            <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:24px;border:1px solid #eee;border-radius:8px;">
+              <h2 style="margin-bottom:8px;">Verify your email</h2>
+              <p>Your verification code:</p>
+              <h1 style="color:#2563eb;letter-spacing:6px;font-size:36px;margin:16px 0;">${otp}</h1>
+              <p style="color:#888;font-size:13px;">Expires in 2 minutes. If you didn't request this, ignore this email.</p>
+            </div>
+          `,
+        })
+      } catch (emailErr) {
+        request.log.error(emailErr, 'Failed to send verification email')
+        // Don't fail signup if email fails — OTP is still in Redis
+      }
+
+      return reply.status(200).send({
+        success: true,
+        message: 'OTP sent successfully',
+      })
+    }
+    catch(error) {
+      request.log.error(error, 'Forgot password error')
+      return reply.status(500).send({
+        statusCode: 500,
+        error: 'Internal Server Error',
+        message: 'Failed to send OTP.',
+      })
+
     }
   })
 
