@@ -1,6 +1,7 @@
 import { randomBytes } from 'crypto'
 import type { FastifyRequest, FastifyReply } from 'fastify'
 import { Session } from '../schema/mongo/session.model.js'
+import { type IUser } from '../schema/mongo/user.model.js'
 import { config } from '../config/config.js'
 
 const DAY_MS            = 24 * 60 * 60 * 1000
@@ -45,17 +46,42 @@ export async function createSession(
 
 // ─── Validate session ─────────────────────────────────────────────────────────
 
+// ─── Validated session payload ────────────────────────────────────────────────
+// Returned by validateSession. Includes the populated user so callers
+// never need a second DB round-trip.
+
+export interface ValidSession {
+  userId:    string
+  sessionId: string
+  user: {
+    id:            string
+    name:          string
+    email:         string
+    emailVerified: boolean
+  }
+}
+
 export async function validateSession(
   request: FastifyRequest,
   reply: FastifyReply,
-): Promise<{ userId: string; sessionId: string } | null> {
+): Promise<ValidSession | null> {
   const token = request.cookies['sessionToken']
   if (!token) return null
 
-  const session = await Session.findOne({ token })
+  // Single query — populate joins the User document in the same round-trip.
+  const session = await Session
+    .findOne({ token })
+    .populate<{ userId: IUser | null }>('userId')
 
   // Not found
   if (!session) return null
+
+  // User was deleted after the session was created
+  if (!session.userId) {
+    await Session.deleteOne({ _id: session._id })
+    reply.clearCookie('sessionToken', cookieOptions)
+    return null
+  }
 
   // Expired — clean up both DB and cookie
   if (session.expiresAt.getTime() < Date.now()) {
@@ -89,9 +115,16 @@ export async function validateSession(
     request.log.info(`[Session] Refreshed session ${session._id}`)
   }
 
+  const u = session.userId  // already populated — IUser
   return {
-    userId:    session.userId.toString(),
+    userId:    u._id.toString(),
     sessionId: session._id.toString(),
+    user: {
+      id:            u._id.toString(),
+      name:          u.name,
+      email:         u.email,
+      emailVerified: u.emailVerified,
+    },
   }
 }
 
