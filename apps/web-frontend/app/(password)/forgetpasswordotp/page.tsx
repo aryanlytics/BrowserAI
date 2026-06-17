@@ -65,7 +65,7 @@ const VerifyOtpContent = () => {
     setIsLoading(true);
     const toastId = toast.loading('Verifying...');
     try {
-      await api.post('/api/auth/newpassword', { email, otp });
+      await api.post('/api/auth/verifyforgotpassword', { email, otp });
       toast.success('Email verified!', { id: toastId });
       router.push(`/resetpassword?email=${email}`);
     } catch (err) {
