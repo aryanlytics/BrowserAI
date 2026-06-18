@@ -39,6 +39,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white">
       <Navbar />
+      <header>Welcome, {user.name}</header>
       {children}
     </div>
   );
