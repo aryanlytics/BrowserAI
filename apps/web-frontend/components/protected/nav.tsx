@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { Mic, LogOut, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import api from '@/lib/api';
 import { toast } from 'sonner';
-import { useRouter } from 'next/navigation'; // ✅ App Router — NOT 'next/router'
+import { useRouter } from 'next/navigation';
+import { useSession } from '@/lib/hooks/useSession'; // ✅ App Router — NOT 'next/router'
 
 // ─── Protected Navbar ─────────────────────────────────────────────────────────
 // Shown only on dashboard routes. Handles logout.
@@ -15,21 +16,17 @@ import { useRouter } from 'next/navigation'; // ✅ App Router — NOT 'next/rou
 // via withCredentials (set in lib/api.ts). No manual cookie reading needed here.
 
 const Navbar = () => {
-  const router = useRouter();
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
+  const { user, clearSession } = useSession();  // user comes from cache — zero extra fetch
 
   const handleLogout = async () => {
-    if (isLoggingOut) return; // prevent double-click
+    if (isLoggingOut) return;
     setIsLoggingOut(true);
 
     try {
-      // The browser sends the sessionToken cookie automatically because
-      // api.ts sets withCredentials: true — no manual Cookie header needed.
       await api.post('/api/auth/logout');
-
       toast.success('Logged out successfully');
-      router.push('/signin');
-      router.refresh(); // clear any cached server component data
+      clearSession(); // removes the ['session'] cache entry + redirects to /signin
     } catch (err) {
       const axiosError = err as { response?: { data?: { message?: string } } };
       const message =
@@ -59,8 +56,13 @@ const Navbar = () => {
         <Link className="hover:text-white transition-colors duration-200" href="/resources">Resources</Link>
       </div>
 
-      {/* Logout */}
+      {/* User + Logout */}
       <div className="flex items-center gap-4">
+        {user && (
+          <span className="text-sm text-white/60 hidden md:block">
+            {user.name}
+          </span>
+        )}
         <Button
           onClick={handleLogout}
           disabled={isLoggingOut}
