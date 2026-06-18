@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/common/navbar";
-import Footer from "@/components/common/footer";
 import { Toaster } from "@/components/ui/sonner";
 import { Providers } from "@/components/providers";
 
@@ -43,11 +41,7 @@ export default function RootLayout({
     >
       <body suppressHydrationWarning className="min-h-full bg-[#0a0a0f] text-white flex flex-col">
         <Providers>
-          <Navbar />
-          <main className="flex-1">
-            {children}
-          </main>
-          <Footer />
+          {children}
           <Toaster theme="dark" richColors position="top-right" />
         </Providers>
       </body>
