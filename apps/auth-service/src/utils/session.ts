@@ -51,13 +51,10 @@ export async function createSession(
 // never need a second DB round-trip.
 
 export interface ValidSession {
-  userId:    string
-  sessionId: string
   user: {
     id:            string
     name:          string
     email:         string
-    emailVerified: boolean
   }
 }
 
@@ -117,13 +114,10 @@ export async function validateSession(
 
   const u = session.userId  // already populated — IUser
   return {
-    userId:    u._id.toString(),
-    sessionId: session._id.toString(),
     user: {
       id:            u._id.toString(),
       name:          u.name,
       email:         u.email,
-      emailVerified: u.emailVerified,
     },
   }
 }
