@@ -1,47 +1,45 @@
-import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
-import React from 'react'
-import api from '@/lib/api'
-import axios from 'axios'
-import Navbar from '@/components/protected/nav'
+"use client";
 
-export default async function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const cookieStore = await cookies()
-  const token = cookieStore.get('sessionToken')?.value
+// Why "use client" here?
+// Server layouts run on every navigation → always hits the backend.
+// Client layouts persist in the browser → TanStack Query cache works.
 
-  // 2. Query the API Gateway to validate the session on the backend
-  try {
-    await api.get('/api/auth/dashboard', {
-      headers: {
-        // Forward the session cookie to the API Gateway so the server can validate it
-        'Cookie': `sessionToken=${token}`,
-      },
-    })
-  } catch (err) {
-    console.error('[Dashboard Security] ❌ Failed to validate session:', err)
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
+import Navbar from '@/components/protected/nav';
+import { useSession } from '@/lib/hooks/useSession';
 
-    const status = axios.isAxiosError(err)
-    ? err.response?.status
-    : undefined
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const { user, isLoading, isError } = useSession();
 
-  if (status === 401 || status === 403) {
-    redirect('/signin?error=session_expired')
+  // If session is invalid (401/403), send to sign-in.
+  // This is the client-side guard. Middleware already blocked anyone
+  // without a cookie; this catches expired/invalid cookies.
+  useEffect(() => {
+    if (!isLoading && isError) {
+      router.replace('/signin?error=session_expired');
+    }
+  }, [isLoading, isError, router]);
+
+  // Show a spinner only on the very first load (cache miss).
+  // On every subsequent protected-route visit: user is already in cache,
+  // isLoading is false, we render immediately.
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0a0a0f]">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      </div>
+    );
   }
 
-    // Network errors or gateway down
-    redirect('/signin?error=server_error')
-  }
+  if (!user) return null; // redirect in-flight
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white">
-     
       <Navbar />
-    
       {children}
     </div>
-  )
+  );
 }
