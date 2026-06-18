@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "@/components/common/navbar";
 import Footer from "@/components/common/footer";
 import { Toaster } from "@/components/ui/sonner";
+import { Providers } from "@/components/providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,12 +42,14 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body suppressHydrationWarning className="min-h-full bg-[#0a0a0f] text-white flex flex-col">
-        <Navbar />
-        <main className="flex-1">
-          {children}
-        </main>
-        <Footer />
-        <Toaster theme="dark" richColors position="top-right" />
+        <Providers>
+          <Navbar />
+          <main className="flex-1">
+            {children}
+          </main>
+          <Footer />
+          <Toaster theme="dark" richColors position="top-right" />
+        </Providers>
       </body>
     </html>
   );
