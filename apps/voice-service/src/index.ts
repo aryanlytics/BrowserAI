@@ -1,5 +1,5 @@
 import Fastify from 'fastify'
-import cors from '@fastify/cors'
+
 import cookie from '@fastify/cookie'
 import multipart from '@fastify/multipart'
 import { config } from './config/config.js'
@@ -18,11 +18,7 @@ async function start() {
     },
   })
 
-  // ── Plugins ──────────────────────────────────────────────────────────────────
-  await app.register(cors, {
-    origin:      config.ALLOWED_ORIGINS,
-    credentials: true,
-  })
+
 
   await app.register(cookie)
 
