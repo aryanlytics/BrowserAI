@@ -1,4 +1,5 @@
 import type { FastifyPluginAsync } from 'fastify'
+import { randomBytes } from 'crypto'
 import { User } from '../schema/mongo/user.model.js'
 import { hashPassword, verifyPassword } from '../utils/password.js'
 import { generateOtp } from '../utils/otp.js'
@@ -40,7 +41,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
 
       // Generate OTP — expires in 2 minutes
       const otp = generateOtp()
-      await redis.set(`otp:${email}`, otp, 'EX', 120)
+      await redis.set(`signup_otp:${email}`, otp, 'EX', 120)
 
       // Send email
       try {
@@ -90,7 +91,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
     const { email, otp } = result.data
 
     try {
-      const storedOtp = await redis.get(`otp:${email}`)
+      const storedOtp = await redis.get(`signup_otp:${email}`)
       if (!storedOtp || storedOtp !== otp) {
         return reply.status(400).send({
           statusCode: 400,
@@ -113,7 +114,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
         })
       }
 
-      await redis.del(`otp:${email}`)
+      await redis.del(`signup_otp:${email}`)
 
       // Create session — extract only what's needed
       try {
@@ -179,7 +180,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       
       // Generate a fresh OTP and reset the 2-minute TTL
       const otp = generateOtp()
-      await redis.set(`otp:${email}`, otp, 'EX', 120)
+      await redis.set(`signup_otp:${email}`, otp, 'EX', 120)
       
       // Resend email
       try {
@@ -313,31 +314,25 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
 
     try{
       const existingUser = await User.findOne({ email })
-      if (!existingUser) {
-        return reply.status(404).send({
-          statusCode: 404,
-          error: 'Not Found',
-          message: 'An account with this email does not exist.',
-        })
-      }
 
-      if(!existingUser.emailVerified){
-        return reply.status(409).send({
-          statusCode: 409,
-          error: 'Conflict',
-          message: 'This email is not verified. Please verify your email.',
+      // Anti-enumeration: always return 200 regardless of whether the user exists or is verified.
+      // The OTP email is only sent when conditions are actually met.
+      if (!existingUser || !existingUser.emailVerified) {
+        return reply.status(200).send({
+          success: true,
+          message: 'If an account with that email exists, a reset code has been sent.',
         })
       }
       // Generate OTP — expires in 2 minutes
       const otp = generateOtp()
-      await redis.set(`otp:${email}`, otp, 'EX', 120)
+      await redis.set(`reset_otp:${email}`, otp, 'EX', 120)
 
       // Send email
       try {
         await resend.emails.send({
           from:    'onboarding@resend.dev',
           to:      email,
-          subject: 'Verify your email — BrowserAI',
+          subject: 'Reset your password — BrowserAI',
           html: `
             <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:24px;border:1px solid #eee;border-radius:8px;">
               <h2 style="margin-bottom:8px;">Verify your email</h2>
@@ -382,7 +377,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
     const { email, otp } = result.data
 
     try{
-      const storedOtp = await redis.get(`otp:${email}`)
+      const storedOtp = await redis.get(`reset_otp:${email}`)
       if(!storedOtp){
         return reply.status(404).send({
           statusCode: 404,
@@ -400,11 +395,16 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       // Remove OTP after verification
-      await redis.del(`otp:${email}`)
+      await redis.del(`reset_otp:${email}`)
+
+      // Issue a short-lived reset token (5 minutes) — must be presented to /resetpassword
+      const resetToken = randomBytes(32).toString('hex')
+      await redis.set(`resetToken:${email}`, resetToken, 'EX', 300)
 
       return reply.status(200).send({
         success: true,
         message: 'OTP verified successfully',
+        resetToken,
       })
     }
     catch(error){
@@ -428,9 +428,19 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       })
     }
 
-    const { email, newPassword } = result.data
+    const { email, newPassword, resetToken } = result.data
 
     try{
+      // Validate the short-lived reset token issued by verifyforgotpassword
+      const storedToken = await redis.get(`resetToken:${email}`)
+      if (!storedToken || storedToken !== resetToken) {
+        return reply.status(401).send({
+          statusCode: 401,
+          error: 'Unauthorized',
+          message: 'Invalid or expired reset token. Please request a new code.',
+        })
+      }
+
       const existingUser = await User.findOne({ email })
       if(!existingUser){
         return reply.status(404).send({
@@ -440,13 +450,8 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
         })
       }
 
-      if(!existingUser.emailVerified){
-        return reply.status(409).send({
-          statusCode: 409,
-          error: 'Conflict',
-          message: 'This email is not verified. Please verify your email.',
-        })
-      }
+      // Consume the token — one-time use only
+      await redis.del(`resetToken:${email}`)
 
       const passwordHash = hashPassword(newPassword)
       existingUser.passwordHash = passwordHash
