@@ -16,6 +16,7 @@ const ResetPasswordContent = () => {
   const router       = useRouter();
   const searchParams = useSearchParams();
   const email        = searchParams.get('email') || '';
+  const resetToken   = searchParams.get('resetToken') || '';
 
   const [newPassword, setNewPassword]         = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -31,7 +32,7 @@ const ResetPasswordContent = () => {
       fieldErrors.confirmPassword = 'Passwords do not match';
     }
 
-    const result = resetPasswordSchema.safeParse({ email, newPassword });
+    const result = resetPasswordSchema.safeParse({ email, newPassword, resetToken });
     if (!result.success) {
       result.error.issues.forEach((issue) => {
         fieldErrors[issue.path[0] as string] = issue.message;
@@ -48,7 +49,7 @@ const ResetPasswordContent = () => {
     const toastId = toast.loading('Resetting password...');
 
     try {
-      await api.post('/api/auth/resetpassword', { email, newPassword });
+      await api.post('/api/auth/resetpassword', { email, newPassword, resetToken });
       toast.success('Password reset!', { id: toastId, description: 'You can now sign in.' });
       router.push('/signin');
     } catch (err) {
