@@ -2,7 +2,7 @@ import 'dotenv/config'
 
 const required = [
   'PORT',
-  'ALLOWED_ORIGINS',
+  'SPEECHMATICS_API_KEY'
 ] as const
 
 for (const key of required) {
@@ -16,5 +16,6 @@ for (const key of required) {
 export const config = {
   PORT:            parseInt(process.env['PORT'] ?? '4002', 10),
   NODE_ENV:        process.env['NODE_ENV'] ?? 'development',
-  ALLOWED_ORIGINS: (process.env['ALLOWED_ORIGINS'] ?? 'http://localhost:3000').split(','),
+  SPEECHMATICS_API_KEY: process.env['SPEECHMATICS_API_KEY']
+
 } as const
