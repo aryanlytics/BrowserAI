@@ -65,9 +65,10 @@ const VerifyOtpContent = () => {
     setIsLoading(true);
     const toastId = toast.loading('Verifying...');
     try {
-      await api.post('/api/auth/verifyforgotpassword', { email, otp });
-      toast.success('Email verified!', { id: toastId });
-      router.push(`/resetpassword?email=${email}`);
+      const res = await api.post('/api/auth/verifyforgotpassword', { email, otp });
+      const { resetToken } = res.data as { resetToken: string };
+      toast.success('OTP verified!', { id: toastId });
+      router.push(`/reserpassword?email=${encodeURIComponent(email)}&resetToken=${encodeURIComponent(resetToken)}`);
     } catch (err) {
       const msg = (err as { response?: { data?: { message?: string } } }).response?.data?.message;
       toast.error('Verification failed', { id: toastId, description: msg || 'Invalid or expired code.' });
@@ -82,7 +83,8 @@ const VerifyOtpContent = () => {
     setIsResending(true);
     const toastId = toast.loading('Resending code...');
     try {
-      await api.post('/api/auth/resendotp', { email });
+      // Call forgotpassword again — resendotp is only for unverified users and returns 409 for verified ones
+      await api.post('/api/auth/forgotpassword', { email });
       toast.success('New code sent!', { id: toastId, description: 'Check your inbox.' });
       setOtp('');
       setOtpError('');
