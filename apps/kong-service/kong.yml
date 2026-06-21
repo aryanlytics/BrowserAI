@@ -1,0 +1,38 @@
+_format_version: "3.0"
+
+services:
+  - name: auth-service
+    url: http://auth-service:4001
+    routes:
+      - name: auth-routes
+        paths:
+          - /api/auth
+        strip_path: false
+
+  - name: voice-service
+    url: http://voice-service:4002
+    routes:
+      - name: voice-routes
+        paths:
+          - /api/voice
+        strip_path: true
+
+plugins:
+  - name: cors
+    config:
+      origins:
+        - http://localhost:3000
+      credentials: true
+      methods:
+        - GET
+        - POST
+        - PUT
+        - PATCH
+        - DELETE
+        - OPTIONS
+      headers:
+        - Content-Type
+        - Authorization
+        - Cookie
+      exposed_headers:
+        - Set-Cookie
