@@ -1,5 +1,5 @@
 {
-  "name": "kong-service",
+  "name": "kong-api-gateway",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
