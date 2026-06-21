@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: browser-ai-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  redis:
+    image: redis:alpine
+    container_name: browser-ai-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: apps/auth-service/Dockerfile
+    container_name: browser-ai-auth-service
+    ports:
+      - "4001:4001"
+    environment:
+      - PORT=4001
+      - NODE_ENV=production
+      - MONGO_URL=mongodb://mongodb:27017/browser-ai
+      - REDIS_URL=redis://redis:6379
+      - ALLOWED_ORIGINS=http://localhost:3000
+      - BASE_URL=http://localhost:4000
+      - RESEND_API_KEY=${RESEND_API_KEY}
+    depends_on:
+      - mongodb
+      - redis
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: apps/api-gateway/Dockerfile
+    container_name: browser-ai-api-gateway
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+      - NODE_ENV=production
+      - AUTH_SERVICE_URL=http://auth-service:4001
+      - ALLOWED_ORIGINS=http://localhost:3000
+    depends_on:
+      - auth-service
+
+  voice-service:
+    build:
+      context: .
+      dockerfile: apps/voice-service/Dockerfile
+    container_name: browser-ai-voice-service
+    ports:
+      - "4002:4002"
+    environment:
+      - PORT=4002
+      - NODE_ENV=production
+      - SPEECHMATICS_API_KEY=${SPEECHMATICS_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+
+  web-frontend:
+    build:
+      context: .
+      dockerfile: apps/web-frontend/Dockerfile
+    container_name: browser-ai-web-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_GATEWAY_URL=http://localhost:4000
+    depends_on:
+      - api-gateway
+
+volumes:
+  mongo-data:
+  redis-data:
