@@ -1,6 +1,62 @@
 version: '3.8'
 
 services:
+  # Transient container to bootstrap Kong migrations in cloud PostgreSQL
+  kong-migration:
+    image: kong:3.4-alpine
+    container_name: browser-ai-kong-migration
+    command: kong migrations bootstrap
+    environment:
+      - KONG_DATABASE=postgres
+      - KONG_PG_HOST=${KONG_PG_HOST}
+      - KONG_PG_PORT=${KONG_PG_PORT:-5432}
+      - KONG_PG_USER=${KONG_PG_USER}
+      - KONG_PG_PASSWORD=${KONG_PG_PASSWORD}
+      - KONG_PG_DATABASE=${KONG_PG_DATABASE:-kong}
+      - KONG_PG_SSL=${KONG_PG_SSL:-on}
+      - KONG_PG_SSL_VERIFY=${KONG_PG_SSL_VERIFY:-off}
+    restart: on-failure
+
+  # Main Kong gateway container
+  kong:
+    image: kong:3.4-alpine
+    container_name: browser-ai-kong
+    environment:
+      - KONG_DATABASE=postgres
+      - KONG_PG_HOST=${KONG_PG_HOST}
+      - KONG_PG_PORT=${KONG_PG_PORT:-5432}
+      - KONG_PG_USER=${KONG_PG_USER}
+      - KONG_PG_PASSWORD=${KONG_PG_PASSWORD}
+      - KONG_PG_DATABASE=${KONG_PG_DATABASE:-kong}
+      - KONG_PG_SSL=${KONG_PG_SSL:-on}
+      - KONG_PG_SSL_VERIFY=${KONG_PG_SSL_VERIFY:-off}
+      - KONG_PROXY_LISTEN=0.0.0.0:4000 reuseport, 0.0.0.0:8443 ssl reuseport
+      - KONG_ADMIN_LISTEN=0.0.0.0:8001 reuseport
+      - KONG_LOG_LEVEL=info
+    ports:
+      - "4000:4000"
+      - "8443:8443"
+      - "127.0.0.1:8001:8001"
+    depends_on:
+      kong-migration:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "kong", "health"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+
+  # decK sync container: applies configuration to Kong PG database when Kong is ready
+  kong-config-sync:
+    image: kong/deck:1.26
+    container_name: browser-ai-kong-config-sync
+    volumes:
+      - ./apps/kong-service/kong.yml:/etc/deck/kong.yml:ro
+    command: sync -s /etc/deck/kong.yml --kong-addr http://kong:8001
+    depends_on:
+      kong:
+        condition: service_healthy
+
   auth-service:
     build:
       context: .
@@ -11,26 +67,11 @@ services:
     environment:
       - PORT=4001
       - NODE_ENV=production
-      - MONGO_URL=mongodb://mongodb:27017/browser-ai
-      - REDIS_URL=redis://redis:6379
+      - MONGO_URL=${MONGO_URL}
+      - REDIS_URL=${REDIS_URL}
       - ALLOWED_ORIGINS=http://localhost:3000
       - BASE_URL=http://localhost:4000
       - RESEND_API_KEY=${RESEND_API_KEY}
-
-  api-gateway:
-    build:
-      context: .
-      dockerfile: apps/api-gateway/Dockerfile
-    container_name: browser-ai-api-gateway
-    ports:
-      - "4000:4000"
-    environment:
-      - PORT=4000
-      - NODE_ENV=production
-      - AUTH_SERVICE_URL=http://auth-service:4001
-      - ALLOWED_ORIGINS=http://localhost:3000
-    depends_on:
-      - auth-service
 
   voice-service:
     build:
@@ -57,4 +98,4 @@ services:
       - NODE_ENV=production
       - NEXT_PUBLIC_API_GATEWAY_URL=http://localhost:4000
     depends_on:
-      - api-gateway
+      - kong
