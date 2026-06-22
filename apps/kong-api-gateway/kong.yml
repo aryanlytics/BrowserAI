@@ -1,28 +1,35 @@
 _format_version: "3.0"
 
 services:
+
+  # Auth Service
   - name: auth-service
-    url: http://auth-service:4001
+    url: http://host.docker.internal:4001
+
     routes:
       - name: auth-routes
         paths:
           - /api/auth
         strip_path: false
 
+  # Voice Service
   - name: voice-service
-    url: http://voice-service:4002
+    url: http://host.docker.internal:4002
+
     routes:
       - name: voice-routes
         paths:
           - /api/voice
-        strip_path: true
+        strip_path: false
 
 plugins:
+
+  # CORS
   - name: cors
     config:
       origins:
         - http://localhost:3000
-      credentials: true
+
       methods:
         - GET
         - POST
@@ -30,9 +37,14 @@ plugins:
         - PATCH
         - DELETE
         - OPTIONS
+
       headers:
+        - Accept
+        - Accept-Version
+        - Content-Length
         - Content-Type
         - Authorization
         - Cookie
-      exposed_headers:
-        - Set-Cookie
+
+      credentials: true
+      max_age: 3600
