@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+  #--------------------KONG---------------------
   # Transient container to bootstrap Kong migrations in cloud PostgreSQL
   kong-migration:
     image: kong:3.4-alpine
@@ -16,6 +17,8 @@ services:
       - KONG_PG_SSL=${KONG_PG_SSL:-on}
       - KONG_PG_SSL_VERIFY=${KONG_PG_SSL_VERIFY:-off}
     restart: on-failure
+    profiles:
+      - gateway
 
   # Main Kong gateway container
   kong:
@@ -40,6 +43,8 @@ services:
     depends_on:
       kong-migration:
         condition: service_completed_successfully
+    profiles:
+      - gateway
     healthcheck:
       test: ["CMD", "kong", "health"]
       interval: 5s
@@ -53,9 +58,13 @@ services:
     volumes:
       - ./apps/kong-service/kong.yml:/etc/deck/kong.yml:ro
     command: sync -s /etc/deck/kong.yml --kong-addr http://kong:8001
+    profiles:
+      - gateway
     depends_on:
       kong:
         condition: service_healthy
+
+  #------------------------APP----------------------------------
 
   auth-service:
     build:
@@ -64,6 +73,8 @@ services:
     container_name: browser-ai-auth-service
     ports:
       - "4001:4001"
+    profiles:
+      - app
     environment:
       - PORT=4001
       - NODE_ENV=production
@@ -80,6 +91,8 @@ services:
     container_name: browser-ai-voice-service
     ports:
       - "4002:4002"
+    profiles:
+      - app
     environment:
       - PORT=4002
       - NODE_ENV=production
@@ -93,9 +106,13 @@ services:
     container_name: browser-ai-web-frontend
     ports:
       - "3000:3000"
+    profiles:
+      - app
     environment:
       - PORT=3000
       - NODE_ENV=production
       - NEXT_PUBLIC_API_GATEWAY_URL=http://localhost:4000
     depends_on:
       - kong
+
+#
