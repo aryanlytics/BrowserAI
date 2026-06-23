@@ -2,34 +2,80 @@ _format_version: "3.0"
 
 services:
 
-  # Auth Service
+  # ═══════════════════════════════════════
+  # Auth Service — http://host.docker.internal:4001
+  # ═══════════════════════════════════════
   - name: auth-service
     url: http://host.docker.internal:4001
 
     routes:
-      - name: auth-routes
-        paths:
-          - /api/auth
+
+      - name: login-route
+        paths: [/api/auth/signin]
+        methods: [POST]
         strip_path: false
 
-  # Voice Service
+      - name: register-route
+        paths: [/api/auth/signup]
+        methods: [POST]
+        strip_path: false
+
+      - name: verify-otp-route
+        paths: [/api/auth/verifyotp]
+        methods: [POST]
+        strip_path: false
+
+      - name: resend-otp-route
+        paths: [/api/auth/resendotp]
+        methods: [POST]
+        strip_path: false
+
+      - name: forgot-password-route
+        paths: [/api/auth/forgotpassword]
+        methods: [POST]
+        strip_path: false
+
+      - name: verify-forgot-password-route
+        paths: [/api/auth/verifyforgotpassword]
+        methods: [POST]
+        strip_path: false
+
+      - name: reset-password-route
+        paths: [/api/auth/resetpassword]
+        methods: [POST]
+        strip_path: false
+
+      - name: logout-route
+        paths: [/api/auth/logout]
+        methods: [POST]
+        strip_path: false
+
+      - name: dashboard-route
+        paths: [/api/auth/dashboard]
+        methods: [GET]
+        strip_path: false
+
+  # ═══════════════════════════════════════
+  # Voice Service — http://host.docker.internal:4002
+  # ═══════════════════════════════════════
   - name: voice-service
     url: http://host.docker.internal:4002
 
     routes:
-      - name: voice-routes
-        paths:
-          - /api/voice
+      - name: voice-token-route
+        paths: [/api/voice/token]
+        methods: [POST]
         strip_path: false
 
 plugins:
 
-  # CORS
+  # ═══════════════════════════════════════
+  # Global CORS — applied to all routes
+  # ═══════════════════════════════════════
   - name: cors
     config:
       origins:
         - http://localhost:3000
-
       methods:
         - GET
         - POST
@@ -37,14 +83,136 @@ plugins:
         - PATCH
         - DELETE
         - OPTIONS
-
       headers:
         - Accept
-        - Accept-Version
-        - Content-Length
         - Content-Type
         - Authorization
         - Cookie
-
       credentials: true
       max_age: 3600
+
+  # ═══════════════════════════════════════
+  # Rate Limiting — LOGIN
+  # 5 attempts per minute per IP
+  # ═══════════════════════════════════════
+  - name: rate-limiting
+    route: login-route
+    config:
+      policy: redis
+      redis_host: ${{ env "KONG_REDIS_HOST" }}
+      redis_port: ${{ env "KONG_REDIS_PORT" }}
+      redis_username: ${{ env "KONG_REDIS_USERNAME" }}
+      redis_password: ${{ env "KONG_REDIS_PASSWORD" }}
+      redis_ssl: true
+      limit_by: ip
+      minute: 5
+      error_code: 429
+      error_message: "Too many login attempts. Please wait before trying again."
+
+  # ═══════════════════════════════════════
+  # Rate Limiting — REGISTER
+  # 10 attempts per hour per IP
+  # ═══════════════════════════════════════
+  - name: rate-limiting
+    route: register-route
+    config:
+      policy: redis
+      redis_host: ${{ env "KONG_REDIS_HOST" }}
+      redis_port: ${{ env "KONG_REDIS_PORT" }}
+      redis_username: ${{ env "KONG_REDIS_USERNAME" }}
+      redis_password: ${{ env "KONG_REDIS_PASSWORD" }}
+      redis_ssl: true
+      limit_by: ip
+      hour: 10
+      error_code: 429
+      error_message: "Too many registration attempts. Please wait before trying again."
+
+  # ═══════════════════════════════════════
+  # Rate Limiting — RESEND OTP
+  # 3 attempts per minute per IP
+  # ═══════════════════════════════════════
+  - name: rate-limiting
+    route: resend-otp-route
+    config:
+      policy: redis
+      redis_host: ${{ env "KONG_REDIS_HOST" }}
+      redis_port: ${{ env "KONG_REDIS_PORT" }}
+      redis_username: ${{ env "KONG_REDIS_USERNAME" }}
+      redis_password: ${{ env "KONG_REDIS_PASSWORD" }}
+      redis_ssl: true
+      limit_by: ip
+      minute: 3
+      error_code: 429
+      error_message: "Too many OTP requests. Please wait before trying again."
+
+  # ═══════════════════════════════════════
+  # Rate Limiting — VERIFY OTP
+  # 10 attempts per minute per IP
+  # ═══════════════════════════════════════
+  - name: rate-limiting
+    route: verify-otp-route
+    config:
+      policy: redis
+      redis_host: ${{ env "KONG_REDIS_HOST" }}
+      redis_port: ${{ env "KONG_REDIS_PORT" }}
+      redis_username: ${{ env "KONG_REDIS_USERNAME" }}
+      redis_password: ${{ env "KONG_REDIS_PASSWORD" }}
+      redis_ssl: true
+      limit_by: ip
+      minute: 10
+      error_code: 429
+      error_message: "Too many verification attempts. Please wait before trying again."
+
+  # ═══════════════════════════════════════
+  # Rate Limiting — FORGOT PASSWORD
+  # 5 attempts per hour per IP
+  # ═══════════════════════════════════════
+  - name: rate-limiting
+    route: forgot-password-route
+    config:
+      policy: redis
+      redis_host: ${{ env "KONG_REDIS_HOST" }}
+      redis_port: ${{ env "KONG_REDIS_PORT" }}
+      redis_username: ${{ env "KONG_REDIS_USERNAME" }}
+      redis_password: ${{ env "KONG_REDIS_PASSWORD" }}
+      redis_ssl: true
+      limit_by: ip
+      hour: 5
+      error_code: 429
+      error_message: "Too many password reset requests. Please wait before trying again."
+
+  # ═══════════════════════════════════════
+  # Rate Limiting — VERIFY FORGOT PASSWORD
+  # 10 attempts per minute per IP
+  # ═══════════════════════════════════════
+  - name: rate-limiting
+    route: verify-forgot-password-route
+    config:
+      policy: redis
+      redis_host: ${{ env "KONG_REDIS_HOST" }}
+      redis_port: ${{ env "KONG_REDIS_PORT" }}
+      redis_username: ${{ env "KONG_REDIS_USERNAME" }}
+      redis_password: ${{ env "KONG_REDIS_PASSWORD" }}
+      redis_ssl: true
+      limit_by: ip
+      minute: 10
+      error_code: 429
+      error_message: "Too many verification attempts. Please wait before trying again."
+
+  # ═══════════════════════════════════════
+  # Rate Limiting — RESET PASSWORD
+  # 5 attempts per hour per IP
+  # ═══════════════════════════════════════
+  - name: rate-limiting
+    route: reset-password-route
+    config:
+      policy: redis
+      redis_host: ${{ env "KONG_REDIS_HOST" }}
+      redis_port: ${{ env "KONG_REDIS_PORT" }}
+      redis_username: ${{ env "KONG_REDIS_USERNAME" }}
+      redis_password: ${{ env "KONG_REDIS_PASSWORD" }}
+      redis_ssl: true
+      limit_by: ip
+      hour: 5
+      error_code: 429
+      error_message: "Too many password reset attempts. Please wait before trying again."
