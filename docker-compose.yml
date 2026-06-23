@@ -55,8 +55,10 @@ services:
   kong-config-sync:
     image: kong/deck:1.26
     container_name: browser-ai-kong-config-sync
+    env_file:
+      - ./apps/kong-api-gateway/.env
     volumes:
-      - ./apps/kong-service/kong.yml:/etc/deck/kong.yml:ro
+      - ./apps/kong-api-gateway/kong.yml:/etc/deck/kong.yml:ro
     command: sync -s /etc/deck/kong.yml --kong-addr http://kong:8001
     profiles:
       - gateway

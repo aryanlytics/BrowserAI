@@ -69,7 +69,7 @@ const ResetPasswordPage = () => {
 
     try {
       await api.post(
-        "/api/auth/forgetpassword",
+        "/api/auth/forgotpassword",
         {
           email,
         }
