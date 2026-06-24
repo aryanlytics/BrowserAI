@@ -2,7 +2,8 @@ import 'dotenv/config'
 
 const required = [
   'PORT',
-  'SPEECHMATICS_API_KEY'
+  'SPEECHMATICS_API_KEY',
+  'NODE_ENV',
 ] as const
 
 for (const key of required) {
