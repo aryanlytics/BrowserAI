@@ -1,7 +1,4 @@
 import Fastify from 'fastify'
-
-import cookie from '@fastify/cookie'
-import multipart from '@fastify/multipart'
 import { config } from './config/config.js'
 import voiceRoutes from './routes/voice.routes.js'
 
@@ -17,13 +14,6 @@ async function start() {
         : undefined,
     },
   })
-
-
-
-  await app.register(cookie)
-
-  // Allow audio file uploads up to 25 MB
-  await app.register(multipart, { limits: { fileSize: 25 * 1024 * 1024 } })
 
   // ── Routes ───────────────────────────────────────────────────────────────────
   await app.register(voiceRoutes)
