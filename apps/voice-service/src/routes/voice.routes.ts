@@ -6,8 +6,7 @@ import { config } from '../config/config.js'
 
 
 const voiceRoutes: FastifyPluginAsyy) => {
-  fastify.post('/transcribe', async (request, reply) => {
-    con
+
 
   
 }
