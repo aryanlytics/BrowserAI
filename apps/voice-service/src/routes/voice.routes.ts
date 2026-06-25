@@ -18,7 +18,6 @@ const voiceRoutes: FastifyPluginAsync = async (fastify) => {
       language: 'en',
     })
 
-    return reply.send({ transcript: transcription.text })
   })
 }
 
