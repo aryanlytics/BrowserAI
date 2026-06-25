@@ -3,7 +3,7 @@
 import { config } from '../config/config.js'
 
 
-const groq = new Groq({ apiKey: config.GROQ_API_KEY })
+
 
 const voiceRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/transcribe', async (request, reply) => {
