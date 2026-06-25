@@ -15,8 +15,7 @@ const voiceRoutes: FastifyPluginAsync = async (fastify) => {
     const transcription = await groq.audio.transcriptions.create({
       file: new File([buffer], 'speech.wav', { type: 'audio/wav' }),
       model: 'whisper-large-v3',
-      language: 'en',
-    })
+
 
   })
 }
