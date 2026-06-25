@@ -1,7 +1,7 @@
 // apps/voice-service/src/routes/voice.routes.ts
 import Groq from 'groq-sdk'
 import { config } from '../config/config.js'
-import fastify, { FastifyPluginAsync } from 'fastify'
+
 
 const groq = new Groq({ apiKey: config.GROQ_API_KEY })
 
