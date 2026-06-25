@@ -22,4 +22,3 @@ const voiceRoutes: FastifyPluginAsync = async (fastify) => {
   })
 }
 
-export default voiceRoutes
