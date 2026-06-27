@@ -1,6 +1,10 @@
 // lib/speechmatics.ts
 import axios from 'axios'
 
+interface SpeechmaticsResult {
+  alternatives?: { content?: string }[]
+}
+
 export async function getSpeechmaticsToken(): Promise<string> {
   const res = await axios.post('/api/voice/token', null, {
     withCredentials: true,
@@ -34,14 +38,14 @@ export function connectSpeechmatics(token: string, onFinalTranscript: (text: str
 
     if (msg.message === 'AddPartialTranscript') {
       const partial = msg.results
-        ?.map((r: any) => r.alternatives?.[0]?.content)
+        ?.map((r: SpeechmaticsResult) => r.alternatives?.[0]?.content)
         .join(' ')
       console.log('[Partial]', partial)
     }
 
     if (msg.message === 'AddTranscript') {
       const final = msg.results
-        ?.map((r: any) => r.alternatives?.[0]?.content)
+        ?.map((r: SpeechmaticsResult) => r.alternatives?.[0]?.content)
         .join(' ')
       if (final?.trim()) {
         onFinalTranscript(final.trim())
