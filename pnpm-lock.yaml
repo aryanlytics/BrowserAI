@@ -114,6 +114,9 @@ importers:
       '@fastify/multipart':
         specifier: ^8.3.1
         version: 8.3.1
+      axios:
+        specifier: ^1.17.0
+        version: 1.17.0
       dotenv:
         specifier: ^16.4.5
         version: 16.6.1
