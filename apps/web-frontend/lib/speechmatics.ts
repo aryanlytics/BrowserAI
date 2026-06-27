@@ -5,6 +5,11 @@ interface SpeechmaticsResult {
   alternatives?: { content?: string }[]
 }
 
+interface SpeechmaticsMessage {
+  message: string
+  results?: SpeechmaticsResult[]
+}
+
 export async function getSpeechmaticsToken(): Promise<string> {
   const res = await axios.post('/api/voice/token', null, {
     withCredentials: true,
@@ -34,7 +39,7 @@ export function connectSpeechmatics(token: string, onFinalTranscript: (text: str
   }
 
   ws.onmessage = (event) => {
-    const msg = JSON.parse(event.data)
+    const msg: SpeechmaticsMessage = JSON.parse(event.data as string)
 
     if (msg.message === 'AddPartialTranscript') {
       const partial = msg.results
