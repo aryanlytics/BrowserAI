@@ -1,21 +1,26 @@
 "use client"
 
 import api from '@/lib/api'
+import axios from 'axios'
 import React from 'react'
 import { toast } from 'sonner'
 
 const Dashboard = () => {
-  const handlemic = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault()
+  const handlemic = async () => {
     try {
       const response = await api.post('/api/voice/temp-token')
       console.log(response.data)
     } catch (error) {
-      const axiosError = error as { response?: { data?: { message?: string } } };
-      const message = axiosError.response?.data?.message ?? "Failed to get temp token";
-      toast.error("Failed to get temp token", {
-        description: message,
-      });
+      if (axios.isAxiosError(error)) {
+  const message =
+    error.response?.data?.message ?? "Failed to get temp token";
+
+  toast.error("Failed to get temp token", {
+    description: message,
+  });
+} else {
+  toast.error("Unexpected error");
+}
     }
 
 
