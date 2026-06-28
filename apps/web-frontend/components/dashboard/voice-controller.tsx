@@ -5,8 +5,7 @@ import { Mic, MicOff } from 'lucide-react'
 import { createVAD } from './vad-processor'
 import { transcribeAudio } from './whisper-client'
 import { speak } from './kokoro-player'
-import { socket } from '@/lib/socket'
-
+import { socket } from '@/l
 type AgentState = 'idle' | 'listening' | 'thinking' | 'speaking'
 
 export function VoiceController() {
