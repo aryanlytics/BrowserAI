@@ -13,7 +13,7 @@ export function VoiceController() {
   const [active, setActive] = useState(false)
   const [state, setState] = useState<AgentState>('idle')
   const [transcript, setTranscript] = useState('')
-  const [response, setResponse] = useState('')
+  const [response, setResponse] = useState(''
   const vadRef = useRef<any>(null)
 
   const startListening = async () => {
