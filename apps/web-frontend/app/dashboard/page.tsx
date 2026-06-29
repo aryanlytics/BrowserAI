@@ -1,9 +1,11 @@
 "use client"
 
+import { VoiceButton } from '@/components/protected/voice-button'
 import api from '@/lib/api'
 import axios from 'axios'
 import React from 'react'
 import { toast } from 'sonner'
+
 
 const Dashboard = () => {
   const handlemic = async () => {
@@ -35,6 +37,7 @@ const Dashboard = () => {
              Mic
           </button>
       </div>
+      <VoiceButton onTranscript={(t) => console.log(t)} />
     </div>
   )
 }
