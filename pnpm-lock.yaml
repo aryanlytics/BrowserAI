@@ -154,6 +154,9 @@ importers:
       '@radix-ui/react-slot':
         specifier: ^1.2.4
         version: 1.2.4(@types/react@19.2.2)(react@19.2.4)
+      '@ricky0123/vad-react':
+        specifier: ^0.0.36
+        version: 0.0.36(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@ricky0123/vad-web':
         specifier: ^0.0.30
         version: 0.0.30
@@ -1112,6 +1115,12 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
+
+  '@ricky0123/vad-react@0.0.36':
+    resolution: {integrity: sha512-cD55/RrZAY/ju6SJzZnL/6J5NyJ7ERg99XHeCe4WidRPZnN+tonsTWD/lG6bRFqRfEIFHirUtU60r6SXGLiK8Q==}
+    peerDependencies:
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
 
   '@ricky0123/vad-web@0.0.30':
     resolution: {integrity: sha512-cJyYrh4YeeUBJcbR9Bic/bFDyB9qBkAepvpuWM3vLxnAi7bC3VHzf51UeNdT+OtY4D7MLAgV8iJMc4z41ZnaWg==}
@@ -4935,6 +4944,13 @@ snapshots:
       react: 19.2.4
     optionalDependencies:
       '@types/react': 19.2.2
+
+  '@ricky0123/vad-react@0.0.36(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+    dependencies:
+      '@ricky0123/vad-web': 0.0.30
+      onnxruntime-web: 1.26.0
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
 
   '@ricky0123/vad-web@0.0.30':
     dependencies:
