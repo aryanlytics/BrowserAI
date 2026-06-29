@@ -24,4 +24,37 @@ export function VoiceButton({ onTranscript }: { onTranscript: (text: string) => 
     },
   })
 
-  
+  const start = async () => {
+    try {
+      const token = await getSpeechmaticsToken()
+      wsRef.current = connectSpeechmatics(token, onTranscript)
+      vad.start()
+      setActive(true)
+    } catch (err) {
+      console.error('Failed to start voice', err)
+    }
+  }
+
+  const stop = () => {
+    vad.pause()
+    wsRef.current?.close()
+    wsRef.current = null
+    setActive(false)
+  }
+
+  return (
+    <button
+      onClick={active ? stop : start}
+      className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all ${
+        active
+          ? 'bg-violet-600 shadow-lg shadow-violet-500/40'
+          : 'bg-white/5 border border-white/10'
+      }`}
+    >
+      {active
+        ? <Mic className="w-6 h-6 text-white" />
+        : <MicOff className="w-6 h-6 text-white/50" />
+      }
+    </button>
+  )
+}
