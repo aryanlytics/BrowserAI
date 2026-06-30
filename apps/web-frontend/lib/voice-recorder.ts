@@ -58,7 +58,7 @@ export class VoiceRecorder {
         positiveSpeechThreshold: 0.8,  // confidence required to START detecting speech
         negativeSpeechThreshold: 0.7,  // confidence required to STOP (end of speech)
         minSpeechMs: 3,                  // minimum speech duration in ms to count as speech
-        preSpeechPadFrames: 2,          // include a few frames before speech starts (avoid cutting first word)
+        preSpeechPadMs: 2,              // include a few ms before speech starts (avoid cutting first word)
       })
 
       this.vad.start()
