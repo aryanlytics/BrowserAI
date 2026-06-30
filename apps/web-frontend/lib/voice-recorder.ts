@@ -1,89 +1,58 @@
 import { MicVAD } from '@ricky0123/vad-web'
 
-// ─── Types ──────────────────────────────────────────────────────────────────
+// ─── What this file does ────────────────────────────────────────────────────
+// Listens to your mic, detects when you speak (using Silero AI model),
+// and gives you the audio ready to send to Speechmatics.
+//
+// Usage:
+//   const stop = await startListening({
+//     onSpeech: (audio) => ws.send(audio),   // send to Speechmatics
+//   })
+//   stop()  // when done
 
-interface VoiceRecorderOptions {
-  onSpeechStart?: () => void
-  onSpeechEnd?: (audioChunk: ArrayBuffer) => void
-  onVADError?: (error: unknown) => void
+// ─── Options ────────────────────────────────────────────────────────────────
+
+interface ListenOptions {
+  onSpeech: (audio: ArrayBuffer) => void   // called with audio when you stop talking
+  onError?: (error: unknown) => void       // called if mic/model fails
 }
 
-// ─── Convert Float32Array (Silero output) → Int16Array (Speechmatics input) ──
-// Speechmatics expects pcm_s16le — signed 16-bit little-endian PCM.
-// Silero VAD gives us Float32 samples in range [-1, 1].
+// ─── Convert audio format ───────────────────────────────────────────────────
+// Silero gives Float32 (-1 to 1), Speechmatics wants Int16 (-32768 to 32767)
 
-function float32ToInt16(float32: Float32Array): Int16Array {
-  const int16 = new Int16Array(float32.length)
-  for (let i = 0; i < float32.length; i++) {
-    const sample = Math.max(-1, Math.min(1, float32[i]!))
-    int16[i] = sample < 0 ? sample * 0x8000 : sample * 0x7fff
+function toInt16(audio: Float32Array): ArrayBuffer {
+  const result = new Int16Array(audio.length)
+  for (let i = 0; i < audio.length; i++) {
+    const s = Math.max(-1, Math.min(1, audio[i]!))
+    result[i] = s < 0 ? s * 32768 : s * 32767
   }
-  return int16
+  return result.buffer as ArrayBuffer
 }
 
-// ─── Voice Recorder ───────────────────────────────────────────────────────────
-// Wraps Silero VAD (via @ricky0123/vad-web). Only fires onSpeechEnd
-// when actual speech is detected — silence, noise, etc. are filtered out
-// before this callback runs.
+// ─── Start listening ────────────────────────────────────────────────────────
+// Returns a stop() function. That's it.
 
-export class VoiceRecorder {
-  private vad: MicVAD | null = null
-  private options: VoiceRecorderOptions
-  private isActive = false
+export async function startListening(options: ListenOptions): Promise<() => void> {
+  try {
+    const vad = await MicVAD.new({
+      onSpeechEnd: (audio: Float32Array) => {
+        options.onSpeech(toInt16(audio))
+      },
+      positiveSpeechThreshold: 0.8,
+      negativeSpeechThreshold: 0.7,
+      minSpeechMs: 3,
+      preSpeechPadMs: 2,
+    })
 
-  constructor(options: VoiceRecorderOptions) {
-    this.options = options
-  }
+    vad.start()
 
-  // ─── Start listening ────────────────────────────────────────────────────────
-
-  async start(): Promise<void> {
-    if (this.isActive) return
-
-    try {
-      this.vad = await MicVAD.new({
-        // Fires when Silero detects speech beginning
-        onSpeechStart: () => {
-          this.options.onSpeechStart?.()
-        },
-
-        // Fires when Silero detects speech has ended
-        // audio = Float32Array of the full speech segment (silence already excluded)
-        onSpeechEnd: (audio: Float32Array) => {
-          const int16Audio = float32ToInt16(audio)
-          this.options.onSpeechEnd?.(int16Audio.buffer as ArrayBuffer)
-        },
-
-        // Tuning — adjust if too sensitive / not sensitive enough
-        positiveSpeechThreshold: 0.8,  // confidence required to START detecting speech
-        negativeSpeechThreshold: 0.7,  // confidence required to STOP (end of speech)
-        minSpeechMs: 3,                  // minimum speech duration in ms to count as speech
-        preSpeechPadMs: 2,              // include a few ms before speech starts (avoid cutting first word)
-      })
-
-      this.vad.start()
-      this.isActive = true
-
-    } catch (err) {
-      this.options.onVADError?.(err)
-      throw err
+    // Return a cleanup function
+    return () => {
+      vad.pause()
+      vad.destroy()
     }
-  }
-
-  // ─── Stop listening ─────────────────────────────────────────────────────────
-
-  stop(): void {
-    if (!this.isActive) return
-
-    this.vad?.pause()
-    this.vad?.destroy()
-    this.vad = null
-    this.isActive = false
-  }
-
-  // ─── Status ─────────────────────────────────────────────────────────────────
-
-  get active(): boolean {
-    return this.isActive
+  } catch (err) {
+    options.onError?.(err)
+    throw err
   }
 }
