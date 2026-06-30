@@ -28,17 +28,5 @@ const voiceRoutes: FastifyPluginAsync = async (fastify) => {
                         ? err.response.data
                         : JSON.stringify(err.response?.data ?? err.message)
 
-                request.log.error(`[Speechmatics] Failed to get token: ${errText}`)
-            } else {
-                request.log.error(err, 'Voice token error')
-            }
-
-            return reply.status(500).send({
-                statusCode: 500,
-                error: 'Internal Server Error',
-                message: 'Failed to request voice token',
-            })
-        }
-    })
-}
+     
 export default voiceRoutes
