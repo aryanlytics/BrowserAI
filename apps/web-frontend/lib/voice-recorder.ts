@@ -51,13 +51,13 @@ export class VoiceRecorder {
         // audio = Float32Array of the full speech segment (silence already excluded)
         onSpeechEnd: (audio: Float32Array) => {
           const int16Audio = float32ToInt16(audio)
-          this.options.onSpeechEnd?.(int16Audio.buffer)
+          this.options.onSpeechEnd?.(int16Audio.buffer as ArrayBuffer)
         },
 
         // Tuning — adjust if too sensitive / not sensitive enough
         positiveSpeechThreshold: 0.8,  // confidence required to START detecting speech
         negativeSpeechThreshold: 0.7,  // confidence required to STOP (end of speech)
-        minSpeechFrames: 3,             // minimum consecutive frames to count as speech
+        minSpeechMs: 3,                  // minimum speech duration in ms to count as speech
         preSpeechPadFrames: 2,          // include a few frames before speech starts (avoid cutting first word)
       })
 
