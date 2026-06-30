@@ -12,10 +12,6 @@ const Dashboard = () => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [transcript])
 
-  const handleTranscript = (text: string) => {
-    if (!text.trim()) return
-    setTranscript((prev) => [...prev, text])
-  }
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white flex flex-col items-center pt-20 px-4">
