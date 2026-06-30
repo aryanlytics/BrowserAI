@@ -1,6 +1,6 @@
 "use client"
 
-import { VoiceButton } from '@/components/protected/voice-button'
+
 import React, { useState, useRef, useEffect } from 'react'
 
 const Dashboard = () => {
@@ -23,7 +23,7 @@ const Dashboard = () => {
       <h1 className="text-2xl font-semibold mb-8 tracking-tight">Dashboard</h1>
 
       {/* ── Mic Button ──────────────────────────────────────────── */}
-      <VoiceButton onTranscript={handleTranscript} />
+      
 
       {/* ── Transcript Panel ────────────────────────────────────── */}
       <div className="w-full max-w-2xl mt-10">
