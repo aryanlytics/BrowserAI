@@ -1,5 +1,6 @@
 import Fastify from 'fastify'
 import { config } from './config/config.js'
+import voiceRoutes from './routes/voice.routes.js'
 
 
 async function start() {
