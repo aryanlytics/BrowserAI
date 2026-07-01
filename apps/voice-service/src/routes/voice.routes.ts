@@ -18,8 +18,20 @@ const voiceRoutes: FastifyPluginAsync = async (fastify) => {
         );
 
         
-        at.addGrant({ room: roomName, roomJoin: true });
+        at.addGrant({
+            roomJoin: true,
+            room: roomName,
+            canPublish: true,
+            canSubscribe: true,
+            canPublishData: true,
+        });
+
         const token = await at.toJwt();
+    
+        return {
+        serverUrl: config.LIVEKIT_URL,
+        token,
+        };
         
     
   })
