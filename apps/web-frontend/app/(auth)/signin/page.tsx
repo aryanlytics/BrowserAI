@@ -38,7 +38,7 @@ const SignIn = () => {
   };
 
   const handlepassword = () => {
-    router.push('/forgotpassword');
+    router.push('/forgetpassword');
   };
     
   
