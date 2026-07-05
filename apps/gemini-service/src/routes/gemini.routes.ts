@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from "fastify";
 import config from "../config/config.js";
-import { Room, RoomEvent, AccessToken} from "livekit-server-sdk";
+import { Room, AccessToken} from "livekit-server-sdk";
 
 const geminiRoutes: FastifyPluginAsync = async (fastify) => {
     fastify.post("/api/gemini/connect", async (request, reply) => {
