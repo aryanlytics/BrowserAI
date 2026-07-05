@@ -1,12 +1,12 @@
 import type { FastifyPluginAsync } from "fastify";
 import config from "../config/config.js";
-import { Room, RoomServiceClient, AccessToken} from "livekit-server-sdk";
+import { Room, RoomEvent, AccessToken} from "livekit-server-sdk";
 
 const geminiRoutes: FastifyPluginAsync = async (fastify) => {
     fastify.post("/api/gemini/connect", async (request, reply) => {
         const roomName = "browser-ai-room";
-        const participantIdentity = "aryan-browser-ai";
-        const participantName = "Aryan";
+        const participantIdentity = "gemini-browser-ai";
+        const participantName = "Gemini Agent";
 
         const at = new AccessToken(
         config.LIVEKIT_API_KEY,
