@@ -66,6 +66,9 @@ importers:
       fastify:
         specifier: ^4.28.1
         version: 4.29.1
+      livekit-server-sdk:
+        specifier: ^2.16.0
+        version: 2.16.0
     devDependencies:
       '@types/node':
         specifier: ^20
