@@ -4,6 +4,9 @@ const required = [
     "PORT",
     "GEMINI_API_KEY",
     "NODE_ENV",
+    "LIVEKIT_URL",
+    "LIVEKIT_API_KEY",
+    "LIVEKIT_SECRET_KEY",
 ] as const;
 
 for (const key of required){
@@ -18,6 +21,9 @@ export const config = {
     PORT: parseInt(process.env['PORT'] ?? '4003', 10),
     NODE_ENV: process.env['NODE_ENV'] ?? 'development',
     GEMINI_API_KEY: process.env['GEMINI_API_KEY'],
+    LIVEKIT_URL: process.env['LIVEKIT_URL'],
+    LIVEKIT_API_KEY: process.env['LIVEKIT_API_KEY'],
+    LIVEKIT_SECRET_KEY: process.env['LIVEKIT_SECRET_KEY'],
 } as const;
 
 export default config;
