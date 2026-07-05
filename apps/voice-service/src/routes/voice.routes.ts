@@ -4,8 +4,8 @@ import { AccessToken } from "livekit-server-sdk";
 
 const voiceRoutes: FastifyPluginAsync = async (fastify) => {
     fastify.post("/api/voice/temp-token", async (request, reply)=>{
-        const roomName = "browser-ai";
-        const participantIdentity = "aryan";
+        const roomName = "browser-ai-room";
+        const participantIdentity = "aryan-browser-ai";
         const participantName = "Aryan";
 
         const at = new AccessToken(
