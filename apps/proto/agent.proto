@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package agent;
+
+// The Gemini Service (4003) implements this server.
+// The Voice Service (4002) calls it as a client.
+service AgentService {
+  // Tell the AI agent to join a LiveKit room
+  rpc JoinRoom (JoinRoomRequest) returns (JoinRoomResponse);
+
+  // Tell the AI agent to leave a LiveKit room
+  rpc LeaveRoom (LeaveRoomRequest) returns (LeaveRoomResponse);
+}
+
+// ─── JoinRoom ──────────────────────────────────────────────
+
+message JoinRoomRequest {
+  string room_name    = 1;   // e.g. "session-abc123"
+  string agent_token  = 2;   // LiveKit JWT for the agent
+  string livekit_url  = 3;   // e.g. "wss://your-livekit.com"
+}
+
+message JoinRoomResponse {
+  bool   success  = 1;
+  string agent_id = 2;       // identifier for this agent session
+  string error    = 3;       // empty if success
+}
+
+// ─── LeaveRoom ─────────────────────────────────────────────
+
+message LeaveRoomRequest {
+  string room_name = 1;
+}
+
+message LeaveRoomResponse {
+  bool   success = 1;
+  string error   = 2;
+}
