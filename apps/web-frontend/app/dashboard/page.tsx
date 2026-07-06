@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, } from "react";
 import { Room, RoomEvent } from "livekit-client";
 import api from "@/lib/api";
 
@@ -77,16 +77,7 @@ export default function Dashboard() {
     }
   };
 
-  // Automated layout memory unmount hook
-  useEffect(() => {
-    return () => {
-      const activeRoom = roomRef.current;
-      if (activeRoom) {
-        activeRoom.localParticipant.setMicrophoneEnabled(false).catch(console.error);
-        activeRoom.disconnect();
-      }
-    };
-  }, []);
+  
 
   return (
     <div className="p-10">
