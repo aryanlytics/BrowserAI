@@ -1,4 +1,4 @@
-// apps/voice-service/src/grpc/agent-client.ts
+
 //
 // gRPC client that Voice Service (4002) uses to tell
 // Gemini Service (4003) to join or leave a LiveKit room.
