@@ -62,8 +62,8 @@ services:
     url: http://host.docker.internal:4002
 
     routes:
-      - name: voice-temp-token-route
-        paths: [/api/voice/temp-token]
+      - name: voice-session
+        paths: [/api/voice/session]
         methods: [POST]
         strip_path: false
 
