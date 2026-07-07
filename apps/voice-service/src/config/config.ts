@@ -2,11 +2,11 @@ import 'dotenv/config'
 
 const required = [
   'PORT',
-  'SPEECHMATICS_API_KEY',
   'NODE_ENV',
   'LIVEKIT_URL',
   'LIVEKIT_API_KEY',
   'LIVEKIT_SECRET_KEY',
+  'GEMINI_GRPC_URL',
 ] as const
 
 for (const key of required) {
@@ -18,11 +18,10 @@ for (const key of required) {
 }
 
 export const config = {
-  PORT:            parseInt(process.env['PORT'] ?? '4002', 10),
-  NODE_ENV:        process.env['NODE_ENV'] ?? 'development',
-  SPEECHMATICS_API_KEY: process.env['SPEECHMATICS_API_KEY'],
-  LIVEKIT_API_KEY: process.env['LIVEKIT_API_KEY'],
-  LIVEKIT_SECRET_KEY: process.env['LIVEKIT_SECRET_KEY'],
-  LIVEKIT_URL: process.env['LIVEKIT_URL'],
-
+  PORT:              parseInt(process.env['PORT'] ?? '4002', 10),
+  NODE_ENV:          process.env['NODE_ENV'] ?? 'development',
+  LIVEKIT_URL:       process.env['LIVEKIT_URL']!,
+  LIVEKIT_API_KEY:   process.env['LIVEKIT_API_KEY']!,
+  LIVEKIT_SECRET_KEY: process.env['LIVEKIT_SECRET_KEY']!,
+  GEMINI_GRPC_URL:   process.env['GEMINI_GRPC_URL'] ?? 'localhost:50051',
 } as const
