@@ -72,6 +72,9 @@ importers:
       fastify:
         specifier: ^4.28.1
         version: 4.29.1
+      livekit-client:
+        specifier: ^2.20.0
+        version: 2.20.0(@types/dom-mediacapture-record@1.0.22)
       livekit-server-sdk:
         specifier: ^2.16.0
         version: 2.16.0
