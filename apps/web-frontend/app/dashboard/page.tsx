@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, } from "react";
+import { useRef, useState } from "react";
 import { Room, RoomEvent } from "livekit-client";
 import api from "@/lib/api";
 
@@ -8,6 +8,7 @@ type ConnectionStatus = "idle" | "connecting" | "connected";
 
 export default function Dashboard() {
   const roomRef = useRef<Room | null>(null);
+  const roomNameRef = useRef<string | null>(null);
   const [status, setStatus] = useState<ConnectionStatus>("idle");
 
   const connect = async () => {
@@ -16,15 +17,17 @@ export default function Dashboard() {
     setStatus("connecting");
 
     try {
-      const { data } = await api.post("/api/voice/temp-token");
+      // 1. Create session — voice service generates room, tells AI agent to join
+      const { data } = await api.post("/api/voice/session");
 
-      // Configure room performance optimizations
+      roomNameRef.current = data.roomName;
+
+      // 2. Create LiveKit room
       const room = new Room({
         adaptiveStream: true,
         dynacast: true,
       });
 
-      // 🚀 CRITICAL FIX: Bind listeners BEFORE invoking room.connect()
       room.on(RoomEvent.Connected, () => {
         console.log("✅ LiveKit Connected");
         setStatus("connected");
@@ -34,18 +37,19 @@ export default function Dashboard() {
         console.log("❌ LiveKit Disconnected");
         setStatus("idle");
         roomRef.current = null;
+        roomNameRef.current = null;
       });
 
-      room.on(RoomEvent.ConnectionQualityChanged, (quality, participant) => {
-        console.log(`Connection quality for ${participant.identity}:`, quality);
+      room.on(RoomEvent.TrackSubscribed, (track, _pub, participant) => {
+        console.log(`🎧 Subscribed to ${participant.identity} track: ${track.kind}`);
       });
 
-      // Fire network connection pipeline
+      // 3. Connect browser to LiveKit room
       await room.connect(data.serverUrl, data.token);
 
-      // Explicitly capture hardware mic stream
+      // 4. Enable mic — publishes audio to the room
       await room.localParticipant.setMicrophoneEnabled(true);
-      
+
       roomRef.current = room;
     } catch (err) {
       console.error("LiveKit connection failure:", err);
@@ -55,16 +59,24 @@ export default function Dashboard() {
 
   const disconnect = async () => {
     const room = roomRef.current;
-    if (!room) return;
+    const roomName = roomNameRef.current;
 
     try {
-      // Gracefully turn off mic and unpublish tracks before killing socket connection
-      await room.localParticipant.setMicrophoneEnabled(false);
-      room.disconnect();
+      // 1. Turn off mic
+      if (room) {
+        await room.localParticipant.setMicrophoneEnabled(false);
+        room.disconnect();
+      }
+
+      // 2. Tell voice service to disconnect the AI agent
+      if (roomName) {
+        await api.post("/api/voice/disconnect", { roomName });
+      }
     } catch (err) {
-      console.error("Error during graceful disconnect:", err);
+      console.error("Error during disconnect:", err);
     } finally {
       roomRef.current = null;
+      roomNameRef.current = null;
       setStatus("idle");
     }
   };
@@ -76,8 +88,6 @@ export default function Dashboard() {
       connect();
     }
   };
-
-  
 
   return (
     <div className="p-10">
