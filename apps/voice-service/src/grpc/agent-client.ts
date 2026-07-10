@@ -83,7 +83,7 @@ export function leaveRoom(
 ): Promise<LeaveRoomResponse> {
   const c = getAgentClient(grpcUrl)
 
-  return new Promise((resolve, reject) => {
+  return new Promise((ve, reject) => {
     c.leaveRoom(request, (err: grpc.ServiceError | null, response: LeaveRoomResponse) => {
       if (err) return reject(err)
       resolve(respon
