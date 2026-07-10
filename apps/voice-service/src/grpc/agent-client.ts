@@ -86,5 +86,5 @@ export function leaveRoom(
   return new Promise((resolve, reject) => {
     c.leaveRoom(request, (err: grpc.ServiceError | null, response: LeaveRoomResponse) => {
       if (err) return reject(err)
-      resolve(response)
+      resolve(respon
     
