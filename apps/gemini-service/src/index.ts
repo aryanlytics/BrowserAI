@@ -1,6 +1,5 @@
 import Fastify from 'fastify'
 import config from './config/config.js'
-import geminiRoutes from './routes/gemini.routes.js'
 import { startGrpcServer } from './grpc/agent-server.js'
 
 async function start() {
@@ -14,8 +13,6 @@ async function start() {
         : undefined,
     },
   })
-
-  app.register(geminiRoutes)
 
   // ── gRPC Server ─────────────────────────────────────────────────────────────
   const grpcPort = config.GRPC_PORT
