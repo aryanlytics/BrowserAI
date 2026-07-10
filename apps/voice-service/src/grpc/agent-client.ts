@@ -88,5 +88,4 @@ export function leaveRoom(
       if (err) return reject(err)
       resolve(response)
     })
-  })
-
+  
