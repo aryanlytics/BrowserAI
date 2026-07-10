@@ -4,6 +4,9 @@ package agent;
 
 // The Gemini Service (4003) implements this server.
 // The Voice Service (4002) calls it as a client.
+
+
+
 service AgentService {
   // Tell the AI agent to join a LiveKit room
   rpc JoinRoom (JoinRoomRequest) returns (JoinRoomResponse);
