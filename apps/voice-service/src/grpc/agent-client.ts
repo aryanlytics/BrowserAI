@@ -27,7 +27,7 @@ const proto = grpc.loadPackageDefinition(packageDefinition) as any
 
 let client: any = null
 
-export function getAgentClient(grpcUrl: string) {
+function getAgentClient(grpcUrl: string) {
   if (!client) {
     client = new proto.agent.AgentService(
       grpcUrl,
