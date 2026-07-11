@@ -1,6 +1,6 @@
 import Fastify from 'fastify'
 import { config } from './config/config.js'
-import voiceRoutes from './routes/voice.routes.js'
+import sessionRoutes from './routes/session.routes.js'
 
 
 async function start() {
@@ -17,7 +17,7 @@ async function start() {
   })
 
   // ── Routes ───────────────────────────────────────────────────────────────────
-  app.register(voiceRoutes)
+  app.register(sessionRoutes)
 
   // ── Start ────────────────────────────────────────────────────────────────────
   try {
