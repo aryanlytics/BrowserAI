@@ -1,6 +1,6 @@
 import Fastify from 'fastify'
 import config from './config/config.js'
-import { startGrpcServer } from './grpc/agent-server.js'
+import { startGrpcServer } from './grpc/agent-rpc-handler.js'
 
 async function start() {
   // ── Fastify (HTTP) ──────────────────────────────────────────────────────────
