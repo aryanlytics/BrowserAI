@@ -1,4 +1,4 @@
-// apps/gemini-service/src/agent/room-manage
+// apps/gemini-service/src/agent/room-manag
 //
 // Manages a single AI agent session inside a LiveKit room.
 // - Connects to the room with the provided token
