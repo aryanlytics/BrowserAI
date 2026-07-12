@@ -15,10 +15,12 @@
     "dotenv": "^16.4.5",
     "fastify": "^4.28.1",
     "livekit-client": "^2.20.0",
-    "livekit-server-sdk": "^2.16.0"
+    "livekit-server-sdk": "^2.16.0",
+    "ws": "^8.21.0"
   },
   "devDependencies": {
     "@types/node": "^20",
+    "@types/ws": "^8.18.1",
     "pino-pretty": "^11.2.1",
     "tsx": "^4.15.7",
     "typescript": "^5"
