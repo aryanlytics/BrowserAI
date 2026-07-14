@@ -40,7 +40,7 @@ export class GeminiLiveConnection {
         // First message MUST be the setup
         this.ws!.send(JSON.stringify({
           setup: {
-            model: 'models/gemini-2.0-flash-live',
+            model: 'models/gemini-3.1-flash-live-preview',
             generationConfig: {
               responseModalities: ['TEXT'],  // text-only responses for now
             },
