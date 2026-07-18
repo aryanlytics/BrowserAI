@@ -1,4 +1,4 @@
-// apps/gemini-service/src/agent/room-manager
+// apps/gemini-service/src/agent/room-manage
 //
 // Manages AI agent sessions inside LiveKit rooms.
 // Uses @livekit/rtc-node to get raw audio frames from the user,
