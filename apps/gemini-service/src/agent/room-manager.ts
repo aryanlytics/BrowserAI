@@ -23,6 +23,10 @@ export interface AgentSession {
 // Map of active sessions by room name
 const activeSessions = new Map<string, AgentSession>()
 
+// Tracks rooms that already have an audio stream piping to Gemini.
+// Prevents duplicate streams when the user toggles mic or reconnects.
+const activeAudioStreams = new Set<string>()
+
 export function getSession(roomName: string): AgentSession | undefined {
   return activeSessions.get(roomName)
 }
@@ -62,20 +66,28 @@ export async function joinRoom(
   room.on(
     RoomEvent.TrackSubscribed,
     (track: RemoteTrack, _publication: RemoteTrackPublication, participant: RemoteParticipant) => {
-      if (track.kind === TrackKind.KIND_AUDIO) {
-        console.log(`[Agent] 🎧 Subscribed to audio from ${participant.identity}`)
+      if (track.kind !== TrackKind.KIND_AUDIO) return
 
-        // Create an AudioStream to get raw PCM frames (16kHz mono)
-        const audioStream = new AudioStream(track, 16000, 1)
-
-        // Stream audio frames to Gemini
-        void streamAudioToGemini(audioStream, gemini, roomName)
+      // Guard: only one audio stream per room at a time
+      if (activeAudioStreams.has(roomName)) {
+        console.log(`[Agent] ⏭️ Skipping duplicate audio track from ${participant.identity}`)
+        return
       }
+
+      console.log(`[Agent] 🎧 Subscribed to audio from ${participant.identity}`)
+      activeAudioStreams.add(roomName)
+
+      // Create an AudioStream to get raw PCM frames (16kHz mono)
+      const audioStream = new AudioStream(track, 16000, 1)
+
+      // Stream audio frames to Gemini
+      void streamAudioToGemini(audioStream, gemini, roomName)
     },
   )
 
   room.on(RoomEvent.Disconnected, () => {
     console.log(`[Agent] Room ${roomName} disconnected`)
+    activeAudioStreams.delete(roomName)
     gemini.close()
     activeSessions.delete(roomName)
   })
@@ -95,6 +107,7 @@ export async function joinRoom(
     gemini,
     disconnect: () => {
       gemini.close()
+      activeAudioStreams.delete(roomName)
       void room.disconnect()
       activeSessions.delete(roomName)
       console.log(`[Agent] 🛑 Left room: ${roomName}`)
@@ -151,6 +164,7 @@ async function streamAudioToGemini(
     console.error(`[Agent] Audio stream error in room ${roomName}:`, err)
   } finally {
     reader.releaseLock()
+    activeAudioStreams.delete(roomName)
   }
 
   console.log(`[Agent] 🔇 Audio stream ended for room ${roomName}`)
