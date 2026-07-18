@@ -29,10 +29,22 @@ export class GeminiLiveConnection {
 
   // ─── Connect & Setup ──────────────────────────────────────────────────────
 
-  connect(apiKey: string): Promise<void> {
+  connect(apiKey: string, timeoutMs = 10_000): Promise<void> {
     return new Promise((resolve, reject) => {
       const url = `${GEMINI_WS_URL}?key=${apiKey}`
       this.ws = new WebSocket(url)
+
+      // ── Timeout guard ──────────────────────────────────────────────
+      // If Gemini doesn't respond with setupComplete within timeoutMs,
+      // close the socket and reject so session creation doesn't hang.
+
+      const timer = setTimeout(() => {
+        if (!this.ready) {
+          console.error(`[Gemini] ❌ Connection timed out after ${timeoutMs}ms`)
+          this.close()
+          reject(new Error(`Gemini connection timed out after ${timeoutMs}ms`))
+        }
+      }, timeoutMs)
 
       this.ws.on('open', () => {
         console.log('[Gemini] WebSocket connected, sending setup...')
@@ -54,6 +66,7 @@ export class GeminiLiveConnection {
         // Setup confirmation — Gemini is ready
         if (msg.setupComplete) {
           console.log('[Gemini] ✅ Setup complete, ready for audio')
+          clearTimeout(timer)
           this.ready = true
           resolve()
           return
@@ -71,12 +84,14 @@ export class GeminiLiveConnection {
 
       this.ws.on('error', (err) => {
         console.error('[Gemini] WebSocket error:', err.message)
+        clearTimeout(timer)
         this.callbacks.onError?.(err)
         if (!this.ready) reject(err)
       })
 
       this.ws.on('close', () => {
         console.log('[Gemini] WebSocket closed')
+        clearTimeout(timer)
         this.ready = false
         this.ws = null
         this.callbacks.onClose?.()
