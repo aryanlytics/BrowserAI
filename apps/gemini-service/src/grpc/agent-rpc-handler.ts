@@ -1,7 +1,7 @@
 // apps/gemini-service/src/grpc/agent-rpc-handler.ts
 //
 // gRPC server that Voice Service (4002) calls to tell the AI agent
-// to join or leave a LiveKit room
+// to join or leave a LiveKit room.
 
 import * as grpc from '@grpc/grpc-js'
 import * as protoLoader from '@grpc/proto-loader'
