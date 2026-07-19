@@ -23,9 +23,11 @@ export interface AgentSession {
 // Map of active sessions by room name
 const activeSessions = new Map<string, AgentSession>()
 
-// Tracks rooms that already have an audio stream piping to Gemini.
-// Prevents duplicate streams when the user toggles mic or reconnects.
-const activeAudioStreams = new Set<string>()
+// Stores a cancel function for the currently active audio stream per room.
+// When a new track arrives (e.g. user switches from built-in mic → Bluetooth),
+// we call the old cancel function to stop the previous reader loop,
+// then start a new AudioStream for the new track.
+const activeAudioStreams = new Map<string, () => void>()
 
 export function getSession(roomName: string): AgentSession | undefined {
   return activeSessions.get(roomName)
@@ -68,14 +70,16 @@ export async function joinRoom(
     (track: RemoteTrack, _publication: RemoteTrackPublication, participant: RemoteParticipant) => {
       if (track.kind !== TrackKind.KIND_AUDIO) return
 
-      // Guard: only one audio stream per room at a time
-      if (activeAudioStreams.has(roomName)) {
-        console.log(`[Agent] ⏭️ Skipping duplicate audio track from ${participant.identity}`)
-        return
+      // If there's already an audio stream running, cancel it first.
+      // This handles: user switches mic (built-in → Bluetooth),
+      // LiveKit fires TrackSubscribed with the NEW track.
+      const existingCancel = activeAudioStreams.get(roomName)
+      if (existingCancel) {
+        console.log(`[Agent] 🔄 New audio track from ${participant.identity}, replacing old stream`)
+        existingCancel()
+      } else {
+        console.log(`[Agent] 🎧 Subscribed to audio from ${participant.identity}`)
       }
-
-      console.log(`[Agent] 🎧 Subscribed to audio from ${participant.identity}`)
-      activeAudioStreams.add(roomName)
 
       // Create an AudioStream to get raw PCM frames (16kHz mono)
       const audioStream = new AudioStream(track, 16000, 1)
@@ -106,8 +110,9 @@ export async function joinRoom(
     agentId,
     gemini,
     disconnect: () => {
+      const cancel = activeAudioStreams.get(roomName)
+      if (cancel) cancel()
       gemini.close()
-      activeAudioStreams.delete(roomName)
       void room.disconnect()
       activeSessions.delete(roomName)
       console.log(`[Agent] 🛑 Left room: ${roomName}`)
@@ -146,8 +151,18 @@ async function streamAudioToGemini(
 
   const reader = audioStream.getReader()
 
+  // cancelled is flipped to true when a new track replaces this one.
+  // The reader.read() loop checks it each iteration to exit cleanly.
+  let cancelled = false
+
+  // Register the cancel function so TrackSubscribed can stop this stream.
+  activeAudioStreams.set(roomName, () => {
+    cancelled = true
+    reader.cancel()
+  })
+
   try {
-    while (true) {
+    while (!cancelled) {
       const { done, value: frame } = await reader.read()
       if (done || !gemini.isReady) break
 
@@ -161,10 +176,18 @@ async function streamAudioToGemini(
       gemini.sendAudio(pcmBuffer)
     }
   } catch (err) {
-    console.error(`[Agent] Audio stream error in room ${roomName}:`, err)
+    // reader.cancel() throws — this is expected when replacing tracks
+    if (!cancelled) {
+      console.error(`[Agent] Audio stream error in room ${roomName}:`, err)
+    }
   } finally {
     reader.releaseLock()
-    activeAudioStreams.delete(roomName)
+
+    // Only delete from map if WE are still the active stream.
+    // If a new track already replaced us, it stored its own cancel function.
+    if (!cancelled) {
+      activeAudioStreams.delete(roomName)
+    }
   }
 
   console.log(`[Agent] 🔇 Audio stream ended for room ${roomName}`)
