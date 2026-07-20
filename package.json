@@ -4,6 +4,8 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
+    "dev:voice": "turbo run dev --filter=web-frontend --filter=voice-service --filter=gemini-service",
+    "dev:auth": "turbo run dev --filter=web-frontend --filter=auth-service",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types"
