@@ -91,10 +91,10 @@ const ResetPasswordPage = () => {
       if (axios.isAxiosError(error)) {
         const message =
           error.response?.data?.message ||
-          "Failed to send OTP";
+          "An error occurred. Please try again.";
 
         toast.error(
-          "Failed to send OTP",
+          "Request Failed",
           {
             id: toastId,
             description: message,
