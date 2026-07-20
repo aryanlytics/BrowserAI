@@ -153,7 +153,7 @@ const SignIn = () => {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password" className={errors.password ? "text-red-400" : ""}>Password</Label>
-                  <Button onClick={handlepassword} className="text-xs text-blue-400 hover:text-blue-300">
+                  <Button type="button" variant="link" onClick={handlepassword} className="text-xs text-blue-400 hover:text-blue-300 p-0 h-auto">
                     Forgot password?
                   </Button>
                 </div>
