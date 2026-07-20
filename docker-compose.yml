@@ -4,7 +4,7 @@ services:
   #--------------------KONG---------------------
   # Transient container to bootstrap Kong migrations in cloud PostgreSQL
   kong-migration:
-    image: kong:3.4-alpine
+    image: kong:latest
     container_name: browser-ai-kong-migration
     command: kong migrations bootstrap
     environment:
@@ -22,7 +22,7 @@ services:
 
   # Main Kong gateway container
   kong:
-    image: kong:3.4-alpine
+    image: kong:latest
     container_name: browser-ai-kong
     environment:
       - KONG_DATABASE=postgres
@@ -53,7 +53,7 @@ services:
 
   # decK sync container: applies configuration to Kong PG database when Kong is ready
   kong-config-sync:
-    image: kong/deck:1.26
+    image: kong/deck:latest
     container_name: browser-ai-kong-config-sync
     env_file:
       - ./apps/kong-api-gateway/.env
