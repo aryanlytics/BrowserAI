@@ -60,7 +60,8 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
         })
       } catch (emailErr) {
         request.log.error(emailErr, 'Failed to send verification email')
-        // Don't fail signup if email fails — OTP is still in Redis
+        // DEV FALLBACK: Log OTP to console so devs can still test the flow
+        console.log(`\n\n🚨 [DEV FALLBACK] Resend failed. Your signup OTP for ${email} is: ${otp}\n\n`)
       }
 
       return reply.status(201).send({
@@ -149,18 +150,20 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
 
   // ─── Resend OTP ────────────────────────────────────────────────────────────
   fastify.post('/api/auth/resendotp', async (request, reply) => {
-    const { email } = request.body as { email?: string }
-    
-    if (!email || typeof email !== 'string') {
+    const result = forgetPasswordSchema.safeParse(request.body)
+
+    if (!result.success) {
       return reply.status(400).send({
         statusCode: 400,
         error: 'Bad Request',
-        message: 'Email is required.',
+        message: result.error.issues[0]?.message || 'Email is required.',
       })
     }
+
+    const { email } = result.data
     
     try {
-      const user = await User.findOne({ email: email.trim().toLowerCase() })
+      const user = await User.findOne({ email })
       
       if (!user) {
         // Return 200 to prevent user enumeration
@@ -199,11 +202,8 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
         })
       } catch (emailErr) {
         request.log.error(emailErr, 'Failed to resend verification email')
-        return reply.status(500).send({
-          statusCode: 500,
-          error: 'Internal Server Error',
-          message: 'Failed to send verification email. Please try again.',
-        })
+        // DEV FALLBACK: Log OTP to console so devs can still test the flow
+        console.log(`\n\n🚨 [DEV FALLBACK] Resend failed. Your resend OTP for ${email} is: ${otp}\n\n`)
       }
       
       return reply.status(200).send({
@@ -215,7 +215,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.status(500).send({
         statusCode: 500,
         error: 'Internal Server Error',
-        message: 'Failed to resend OTP.',
+        message: 'An unexpected server error occurred. Please try again later.',
       })
     }
   })
@@ -280,7 +280,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.status(500).send({
           statusCode: 500,
           error: 'Internal Server Error',
-          message: sessionErr instanceof Error ? `DEBUG SESSION: ${sessionErr.message}` : String(sessionErr),
+          message: 'Failed to create session. Please try again.',
         })
       }
       
@@ -293,7 +293,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.status(500).send({
         statusCode: 500,
         error: 'Internal Server Error',
-        message: err instanceof Error ? `DEBUG: ${err.message}` : String(err),
+        message: 'An unexpected server error occurred. Please try again later.',
       })
     }
   })
