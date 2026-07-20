@@ -67,8 +67,11 @@ const VerifyOtpContent = () => {
     try {
       const res = await api.post('/api/auth/verifyforgotpassword', { email, otp });
       const { resetToken } = res.data as { resetToken: string };
+      // Store resetToken in sessionStorage instead of URL for security
+      sessionStorage.setItem('resetToken', resetToken);
+      sessionStorage.setItem('resetEmail', email);
       toast.success('OTP verified!', { id: toastId });
-      router.push(`/reserpassword?email=${encodeURIComponent(email)}&resetToken=${encodeURIComponent(resetToken)}`);
+      router.push('/resetpassword');
     } catch (err) {
       const msg = (err as { response?: { data?: { message?: string } } }).response?.data?.message;
       toast.error('Verification failed', { id: toastId, description: msg || 'Invalid or expired code.' });
