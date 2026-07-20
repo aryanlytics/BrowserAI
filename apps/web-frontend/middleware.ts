@@ -15,7 +15,8 @@ export function middleware(request: NextRequest) {
   }
 
   // 2. Auth routes check (redirect already logged-in users away from signup/signin)
-  if (pathname.startsWith('/signin') || pathname.startsWith('/signup') || pathname.startsWith('/verifyotp')) {
+  const authRoutes = ['/signin', '/signup', '/verifyotp', '/forgetpassword', '/forgetpasswordotp', '/resetpassword']
+  if (authRoutes.some((route) => pathname.startsWith(route))) {
     if (token) {
       // Redirect to dashboard if logged-in user tries to open auth pages
       const dashboardUrl = new URL('/dashboard', request.url)
@@ -33,5 +34,8 @@ export const config = {
     '/signin',
     '/signup',
     '/verifyotp',
+    '/forgetpassword',
+    '/forgetpasswordotp',
+    '/resetpassword',
   ],
 }
