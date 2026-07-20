@@ -2,7 +2,7 @@
 
 import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Sparkles, AlertCircle, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -14,9 +14,8 @@ import { resetPasswordSchema } from '@browser-ai/validators/zod/auth';
 
 const ResetPasswordContent = () => {
   const router       = useRouter();
-  const searchParams = useSearchParams();
-  const email        = searchParams.get('email') || '';
-  const resetToken   = searchParams.get('resetToken') || '';
+  const email        = typeof window !== 'undefined' ? sessionStorage.getItem('resetEmail') || '' : '';
+  const resetToken   = typeof window !== 'undefined' ? sessionStorage.getItem('resetToken') || '' : '';
 
   const [newPassword, setNewPassword]         = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -50,6 +49,9 @@ const ResetPasswordContent = () => {
 
     try {
       await api.post('/api/auth/resetpassword', { email, newPassword, resetToken });
+      // Clear sensitive data from sessionStorage after successful reset
+      sessionStorage.removeItem('resetToken');
+      sessionStorage.removeItem('resetEmail');
       toast.success('Password reset!', { id: toastId, description: 'You can now sign in.' });
       router.push('/signin');
     } catch (err) {
