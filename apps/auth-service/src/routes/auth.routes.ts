@@ -280,7 +280,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.status(500).send({
           statusCode: 500,
           error: 'Internal Server Error',
-          message: 'Failed to create session. Please try again.',
+          message: sessionErr instanceof Error ? `DEBUG SESSION: ${sessionErr.message}` : String(sessionErr),
         })
       }
       
@@ -293,7 +293,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.status(500).send({
         statusCode: 500,
         error: 'Internal Server Error',
-        message: 'Failed to process login.',
+        message: err instanceof Error ? `DEBUG: ${err.message}` : String(err),
       })
     }
   })
@@ -343,8 +343,10 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
           `,
         })
       } catch (emailErr) {
-        request.log.error(emailErr, 'Failed to send verification email')
-        // Don't fail signup if email fails — OTP is still in Redis
+        request.log.error(emailErr, 'Failed to send verification email via Resend')
+        // DEV FALLBACK: If using a free Resend key to send to an unverified email, it will crash.
+        // We log the OTP here so you can still test the flow without email!
+        console.log(`\n\n🚨 [DEV FALLBACK] Resend failed. Your OTP for ${email} is: ${otp}\n\n`)
       }
 
       return reply.status(200).send({
@@ -357,9 +359,8 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.status(500).send({
         statusCode: 500,
         error: 'Internal Server Error',
-        message: 'Failed to send OTP.',
+        message: 'An unexpected server or database error occurred. Please try again later.',
       })
-
     }
   })
 
@@ -412,7 +413,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.status(500).send({
         statusCode: 500,
         error: 'Internal Server Error',
-        message: 'Failed to verify OTP.',
+        message: 'An unexpected server or database error occurred while verifying OTP.',
       })
     }
   })
@@ -467,7 +468,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.status(500).send({
         statusCode: 500,
         error: 'Internal Server Error',
-        message: 'Failed to reset password.',
+        message: 'An unexpected server or database error occurred while resetting password.',
       })
     }
   })
