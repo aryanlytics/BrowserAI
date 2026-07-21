@@ -70,6 +70,16 @@ services:
 plugins:
 
   # ═══════════════════════════════════════
+  # Global Request Logger — see all requests in `docker logs browser-ai-kong`
+  # Remove this plugin once debugging is complete
+  # ═══════════════════════════════════════
+  - name: file-log
+    config:
+      path: /dev/stdout
+      reopen: false
+
+
+  # ═══════════════════════════════════════
   # Global CORS — applied to all routes
   # ═══════════════════════════════════════
   - name: cors
