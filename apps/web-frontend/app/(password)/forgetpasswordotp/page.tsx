@@ -156,7 +156,7 @@ const VerifyOtpContent = () => {
                   }}
                   disabled={isLoading}
                   className={`text-center text-2xl tracking-[0.5em] font-mono h-14 bg-white/5 text-white
-                    max-w-[220px] mx-auto block focus-visible:ring-blue-500/50
+                    max-w-55 mx-auto block focus-visible:ring-blue-500/50
                     ${otpError ? 'border-red-500/50' : 'border-white/10 hover:border-white/20'}`}
                 />
                 {otpError && (
