@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   #--------------------KONG---------------------
   # Transient container to bootstrap Kong migrations in cloud PostgreSQL
@@ -51,7 +49,8 @@ services:
       timeout: 2s
       retries: 5
 
-  # decK sync container: applies configuration to Kong PG database when Kong is ready
+  # decK sync container: applies kong.yml routes into Kong's database
+  # Uses restart: on-failure to retry if Kong's Neon DB is still waking up
   kong-config-sync:
     image: kong/deck:latest
     container_name: browser-ai-kong-config-sync
@@ -59,7 +58,8 @@ services:
       - ./apps/kong-api-gateway/.env
     volumes:
       - ./apps/kong-api-gateway/kong.yml:/etc/deck/kong.yml:ro
-    command: sync -s /etc/deck/kong.yml --kong-addr http://kong:8001
+    command: gateway sync /etc/deck/kong.yml --kong-addr http://kong:8001
+    restart: on-failure
     profiles:
       - gateway
     depends_on:
