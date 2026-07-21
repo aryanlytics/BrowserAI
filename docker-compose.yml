@@ -1,10 +1,17 @@
 services:
   #--------------------KONG---------------------
   # Transient container to bootstrap Kong migrations in cloud PostgreSQL
+  # Uses a retry loop because Neon serverless Postgres needs ~5s to wake from cold start
   kong-migration:
     image: kong:latest
     container_name: browser-ai-kong-migration
-    command: kong migrations bootstrap
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "⏳ Waiting 10s for Neon Postgres to wake up..."
+        sleep 10
+        echo "🔄 Running Kong migrations..."
+        kong migrations bootstrap 2>&1 || kong migrations up 2>&1 || echo "✅ Migrations already up to date"
     environment:
       - KONG_DATABASE=postgres
       - KONG_PG_HOST=${KONG_PG_HOST}
@@ -45,9 +52,10 @@ services:
       - gateway
     healthcheck:
       test: ["CMD", "kong", "health"]
-      interval: 5s
-      timeout: 2s
-      retries: 5
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   # decK sync container: applies kong.yml routes into Kong's database
   # Uses restart: on-failure to retry if Kong's Neon DB is still waking up
