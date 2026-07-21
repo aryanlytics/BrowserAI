@@ -12,47 +12,47 @@ services:
 
       - name: login-route
         paths: [/api/auth/signin]
-        methods: [POST]
+        methods: [POST, OPTIONS]
         strip_path: false
 
       - name: register-route
         paths: [/api/auth/signup]
-        methods: [POST]
+        methods: [POST, OPTIONS]
         strip_path: false
 
       - name: verify-otp-route
         paths: [/api/auth/verifyotp]
-        methods: [POST]
+        methods: [POST, OPTIONS]
         strip_path: false
 
       - name: resend-otp-route
         paths: [/api/auth/resendotp]
-        methods: [POST]
+        methods: [POST, OPTIONS]
         strip_path: false
 
       - name: forgot-password-route
         paths: [/api/auth/forgotpassword]
-        methods: [POST]
+        methods: [POST, OPTIONS]
         strip_path: false
 
       - name: verify-forgot-password-route
         paths: [/api/auth/verifyforgotpassword]
-        methods: [POST]
+        methods: [POST, OPTIONS]
         strip_path: false
 
       - name: reset-password-route
         paths: [/api/auth/resetpassword]
-        methods: [POST]
+        methods: [POST, OPTIONS]
         strip_path: false
 
       - name: logout-route
         paths: [/api/auth/logout]
-        methods: [POST]
+        methods: [POST, OPTIONS]
         strip_path: false
 
       - name: dashboard-route
         paths: [/api/auth/dashboard]
-        methods: [GET]
+        methods: [GET, OPTIONS]
         strip_path: false
 
   # ═══════════════════════════════════════
@@ -64,7 +64,7 @@ services:
     routes:
       - name: voice-session
         paths: [/api/voice/session]
-        methods: [POST]
+        methods: [POST, OPTIONS]
         strip_path: false
 
 plugins:
