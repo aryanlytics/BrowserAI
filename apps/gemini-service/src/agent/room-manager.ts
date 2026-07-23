@@ -45,11 +45,13 @@ export async function joinRoom(
     return activeSessions.get(roomName)!
   }
 
+  let completedText = "";
+
   // 1. Connect to Gemini Live API first
   const gemini = new GeminiLiveConnection({
     onText: (text) => {
-      console.log(`[Gemini → ${roomName}] ${text}`)
-      // TODO: send text back to browser via LiveKit data channel
+      completedText += text;
+      console.log(`[Gemini → ${roomName}] ${completedText}`)
     },
     onError: (err) => {
       console.error(`[Gemini] Error in room ${roomName}:`, err.message)
