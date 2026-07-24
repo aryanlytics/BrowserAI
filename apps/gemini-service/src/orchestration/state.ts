@@ -13,43 +13,43 @@ export const AgentState = Annotation.Root({
 
   // Which agent is currently executing
   activeAgent: Annotation<string>({
-    reducer: (_old, newVal) => newVal,
+    reducer: (_old: string, newVal: string) => newVal,
     default: () => '',
   }),
 
   // The original task description from Gemini
   task: Annotation<string>({
-    reducer: (_old, newVal) => newVal,
+    reducer: (_old: string, newVal: string) => newVal,
     default: () => '',
   }),
 
   // Dynamic key-value store. Agents can write any data here.
   // Example: { "found_url": "https://youtube.com/watch?v=123", "page_title": "Avengers" }
   context: Annotation<Record<string, any>>({
-    reducer: (oldCtx, newCtx) => ({ ...oldCtx, ...newCtx }),
+    reducer: (oldCtx: Record<string, any>, newCtx: Record<string, any>) => ({ ...oldCtx, ...newCtx }),
     default: () => ({}),
   }),
 
   // Error tracking for retry logic
   errorCount: Annotation<number>({
-    reducer: (old, delta) => old + delta,
+    reducer: (old: number, delta: number) => old + delta,
     default: () => 0,
   }),
 
   lastError: Annotation<string>({
-    reducer: (_old, newVal) => newVal,
+    reducer: (_old: string, newVal: string) => newVal,
     default: () => '',
   }),
 
   // Final result to send back to Gemini
   finalResult: Annotation<string>({
-    reducer: (_old, newVal) => newVal,
+    reducer: (_old: string, newVal: string) => newVal,
     default: () => '',
   }),
 
   // Status flag: "running" | "completed" | "failed"
   status: Annotation<string>({
-    reducer: (_old, newVal) => newVal,
+    reducer: (_old: string, newVal: string) => newVal,
     default: () => 'running',
   }),
 })
