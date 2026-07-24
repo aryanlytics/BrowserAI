@@ -15,6 +15,9 @@ import type { AgentStateType } from '../orchestration/state.js'
 
 export function buildBrowserAgentGraph() {
   const agentDef = AGENT_REGISTRY['browser_agent']
+  if (!agentDef) {
+    throw new Error('Browser agent definition not found in registry')
+  }
   const tools = getToolsForAgent('browser_agent')
 
   // The inner LLM — this is NOT Gemini Live. This is a standard chat model
@@ -27,7 +30,7 @@ export function buildBrowserAgentGraph() {
   // ─── Agent Node: LLM decides next action ─────────────────────────
   async function agentNode(state: AgentStateType) {
     // Check retry limit
-    if (state.errorCount >= agentDef.maxRetries) {
+    if (state.errorCount >= agentDef!.maxRetries) {
       return {
         finalResult: `Failed after ${state.errorCount} attempts. Last error: ${state.lastError}`,
         status: 'failed',
@@ -36,7 +39,7 @@ export function buildBrowserAgentGraph() {
 
     // Build the message list for the inner LLM
     const messages = [
-      new SystemMessage(agentDef.systemPrompt),
+      new SystemMessage(agentDef!.systemPrompt),
       new HumanMessage(`Task: ${state.task}`),
       ...state.messages,
     ]
