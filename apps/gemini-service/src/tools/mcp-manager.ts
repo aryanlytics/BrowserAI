@@ -49,7 +49,7 @@ export async function initMcpServers(): Promise<void> {
   // Group tools by the server they came from.
   // MultiServerMCPClient prefixes tool names with the server name.
   for (const [serverName] of Object.entries(MCP_SERVER_CONFIGS)) {
-    const serverTools = tools.filter(t => 
+    const serverTools = tools.filter((t: StructuredTool) => 
       t.name.startsWith(serverName) || // Some adapters prefix
       true // fallback: assign all tools to the first matching server
     )
@@ -59,7 +59,9 @@ export async function initMcpServers(): Promise<void> {
   // For now, if there's only one server, assign all tools to it
   if (Object.keys(MCP_SERVER_CONFIGS).length === 1) {
     const serverName = Object.keys(MCP_SERVER_CONFIGS)[0]
-    allToolsByServer.set(serverName, tools)
+    if (serverName !== undefined) {
+      allToolsByServer.set(serverName, tools)
+    }
   }
 
   console.log(`[MCP] ✅ Loaded ${tools.length} tools from ${Object.keys(MCP_SERVER_CONFIGS).length} servers`)
